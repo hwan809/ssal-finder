@@ -17,19 +17,28 @@ interface RecommendationResult {
 
 function getRecommendation(events: Event[]): RecommendationResult {
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
+  const nowIso = now.toISOString();
+  const todayStr = nowIso.slice(0, 10);
   const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
   const weekEnd = new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10);
 
-  const todayEvents = events.filter((e) => e.start_at.slice(0, 10) === todayStr);
+  const shortFoodName = (e: Event) => {
+    const note = e.food_note;
+    if (note && note.length <= 8) return note;
+    return e.food_type;
+  };
+
+  const futureOnly = (e: Event) => e.start_at >= nowIso;
+
+  const todayEvents = events.filter((e) => e.start_at.slice(0, 10) === todayStr && futureOnly(e));
   if (todayEvents.length > 0) {
-    const food = todayEvents[0].food_note || todayEvents[0].food_type;
+    const food = shortFoodName(todayEvents[0]);
     return { label: S.REC_TODAY_MEAL(food), emphasis: food, items: todayEvents };
   }
 
   const tomorrowEvents = events.filter((e) => e.start_at.slice(0, 10) === tomorrowStr);
   if (tomorrowEvents.length > 0) {
-    const food = tomorrowEvents[0].food_note || tomorrowEvents[0].food_type;
+    const food = shortFoodName(tomorrowEvents[0]);
     return { label: S.REC_TOMORROW_MEAL(food), emphasis: food, items: tomorrowEvents };
   }
 
@@ -68,7 +77,7 @@ export function Recommendation({ events }: RecommendationProps) {
   return (
     <div className="px-5 pt-5 pb-6">
       <div
-        className="text-[18px] font-extrabold leading-[1.4] whitespace-pre-line"
+        className="text-[22px] font-extrabold leading-[1.35] whitespace-pre-line"
         style={{ letterSpacing: "-0.03em" }}
       >
         {renderLabel(label, emphasis)}
