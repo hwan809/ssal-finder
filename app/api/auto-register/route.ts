@@ -13,10 +13,11 @@ const SYSTEM_PROMPT = `Google 설문지의 모든 필드에 답변을 생성하�
 - 과정 선택 (학부/석사/박사): 학번 앞 4자리가 2025 이상이면 "학부", 아니면 "대학원"
 - 학년: 학번 기준으로 추정 (2025=1학년, 2024=2학년)
 - 선택형(라디오/드롭다운): 가장 일반적인 옵션 선택
-- 서술형: 짧고 무난하게 작성 (1-2문장)
-- 빈칸으로 남겨도 되는 선택 항목은 빈 문자열
+- 서술형 (선택): 빈 문자열로 남기세요. 필수가 아니면 답하지 마세요.
+- 선택 항목 (선택): 빈 문자열로 남기세요.
+- 필수 필드만 채우세요. 선택 항목은 빈 문자열 "" 로 두세요.
 
-반드시 JSON 객체만 출력하세요. 키는 entry ID, 값은 답변 문자열.`;
+반드시 JSON 객체만 출력하세요. 키는 entry ID, 값은 답변 문자열 (선택 항목은 "").`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,6 +48,21 @@ export async function POST(req: NextRequest) {
     }
 
     const mapping = event.form_mapping as Record<string, string | null>;
+
+    // Check for duplicate registration
+    const { data: existing } = await supabase
+      .from("registrations")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("profile_name", profile.name)
+      .maybeSingle();
+    if (existing) {
+      return NextResponse.json({ error: "already registered", ok: false }, { status: 409 });
+    }
+
+    const PROFILE_LABELS: Record<string, string> = {
+      name: "이름", student_id: "학번", department: "학과", email: "이메일", phone: "전화번호",
+    };
 
     // Step 1: Try to fetch form labels from Google Forms
     let fieldLabels: Record<string, string> = {};
@@ -152,7 +168,8 @@ ${fieldList}
 
       const readable: Record<string, string> = {};
       for (const [k, v] of Object.entries(fallbackValues)) {
-        readable[fieldLabels[k] || k] = v;
+        const profileField = mapping[k];
+        readable[fieldLabels[k] || (profileField ? PROFILE_LABELS[profileField] : k)] = v;
       }
       await supabase.from("registrations").insert({
         event_id: eventId,
@@ -214,7 +231,9 @@ ${fieldList}
     // Build readable response
     const readableResponse: Record<string, string> = {};
     for (const [entryId, value] of Object.entries(formValues)) {
-      readableResponse[fieldLabels[entryId] || entryId] = value;
+      if (!value) continue;
+      const profileField = mapping[entryId];
+      readableResponse[fieldLabels[entryId] || (profileField ? PROFILE_LABELS[profileField] : entryId)] = value;
     }
 
     // Save registration
