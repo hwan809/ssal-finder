@@ -16,13 +16,20 @@ interface Step {
   type: "text" | "email" | "tel" | "chips";
   placeholder?: string;
   inputMode?: "numeric" | "email" | "tel" | "text";
+  maxLength?: number;
   options?: string[];
 }
 
 const STEPS: Step[] = [
   { key: "name", question: "이름이\n어떻게 되세요?", type: "text", placeholder: "홍길동" },
-  { key: "student_id", question: "학번을\n알려주세요", type: "text", placeholder: "20250000", inputMode: "numeric" },
-  { key: "department", question: "어느 학과\n소속이세요?", type: "chips", options: ["전산학부", "전기전자", "기계공학", "생명과학", "물리학", "수리과학", "화학", "기타"] },
+  { key: "student_id", question: "학번을\n알려주세요", type: "text", placeholder: "20250000", inputMode: "numeric", maxLength: 8 },
+  { key: "department", question: "어느 학과\n소속이세요?", type: "chips", options: [
+    "전산학부", "전기전자공학부", "기계공학과", "생명과학과",
+    "물리학과", "수리과학과", "화학과", "생명화학공학과",
+    "신소재공학과", "건설및환경공학과", "산업디자인학과", "산업및시스템공학과",
+    "항공우주공학과", "원자력및양자공학과", "바이오및뇌공학과",
+    "문술미래전략대학원", "기타",
+  ] },
   { key: "email", question: "이메일 주소를\n입력해주세요", type: "email", placeholder: "hong@kaist.ac.kr" },
   { key: "phone", question: "전화번호를\n알려주세요", type: "tel", placeholder: "010-0000-0000", inputMode: "tel" },
 ];
@@ -148,6 +155,7 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
             onKeyDown={(e) => e.key === "Enter" && curValue && goNext()}
             placeholder={s.placeholder}
             inputMode={s.inputMode}
+            maxLength={s.maxLength}
             autoComplete="off"
             autoCorrect="off"
             className="w-full pb-3 text-[24px] font-bold outline-none"
