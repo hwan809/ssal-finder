@@ -62,10 +62,24 @@ export function getTimeSlot(iso: string): "morning" | "lunch" | "dinner" {
   return "dinner";
 }
 
+const FOOD_KEYWORDS: [RegExp, string][] = [
+  [/쉐이크쉑|쉑쉑|shake\s*shack/i, "쉐이크쉑"],
+  [/배달의민족|배민/i, "배민상품권"],
+  [/치킨/i, "치킨"],
+  [/피자/i, "피자"],
+  [/떡볶이/i, "떡볶이"],
+  [/햄버거/i, "햄버거"],
+  [/케이터링/i, "케이터링"],
+  [/샌드위치/i, "샌드위치"],
+  [/도시락/i, "도시락"],
+  [/상품권/i, "상품권"],
+];
+
 export function shortFoodName(foodNote: string | null, foodType: string): string {
   if (!foodNote) return foodType === "기타" ? "음식" : foodType;
   if (foodNote.length <= 8) return foodNote;
-  const first = foodNote.split(/[,،\s]/)[0].trim();
-  if (first.length >= 2 && first.length <= 8) return first;
-  return foodType === "기타" ? foodNote.slice(0, 6) : foodType;
+  for (const [re, name] of FOOD_KEYWORDS) {
+    if (re.test(foodNote)) return name;
+  }
+  return foodType === "기타" ? "음식" : foodType;
 }
