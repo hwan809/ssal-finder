@@ -131,11 +131,16 @@ ${fieldList}
         llmText;
       formValues = JSON.parse(jsonMatch);
     } catch {
-      return NextResponse.json({ error: "LLM response parsing failed", raw: llmText }, { status: 500 });
+      return NextResponse.json({ error: "LLM response parsing failed" }, { status: 500 });
+    }
+
+    // Check if LLM actually produced answers
+    if (Object.keys(formValues).length === 0) {
+      return NextResponse.json({ error: "LLM produced empty response" }, { status: 500 });
     }
 
     // Override with exact profile values for mapped fields
-    for (const [entryId, profileField] of Object.entries(event.form_mapping as Record<string, string | null>)) {
+    for (const [entryId, profileField] of Object.entries(mapping)) {
       if (profileField && profile[profileField]) {
         formValues[entryId] = profile[profileField];
       }
@@ -170,21 +175,27 @@ ${fieldList}
       });
     } catch {}
 
-    // Save registration record
+    // Build human-readable response for display
+    const readableResponse: Record<string, string> = {};
+    for (const [entryId, value] of Object.entries(formValues)) {
+      const label = fieldLabels[entryId] || entryId;
+      readableResponse[label] = value;
+    }
+
+    // Save registration record (with labels, not entry IDs)
     try {
       await supabase.from("registrations").insert({
         event_id: eventId,
         profile_name: profile.name,
         profile_student_id: profile.student_id || null,
-        form_response: formValues,
+        form_response: readableResponse,
       });
     } catch {}
 
     return NextResponse.json({
       ok: true,
       submitted: Object.keys(formValues).length,
-      formValues,
-      formUrl,
+      response: readableResponse,
       status: submitRes.status,
     });
   } catch (err) {
