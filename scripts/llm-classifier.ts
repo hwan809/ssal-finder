@@ -19,7 +19,7 @@ const SYSTEM_PROMPT = `KAIST 캠퍼스 행사 메일을 분석하여 식사/다�
   "end_at": "ISO 8601 (+09:00) or null",
   "location": "장소",
   "food_type": "버거|도시락|샌드위치|간식|식사|기타",
-  "food_note": "조건 (선착순, 사전신청 등)",
+  "food_note": "음식 이름 4글자 이내 (예: 쉐이크쉑, 치킨, 피자, 떡볶이). 브랜드명 또는 음식 종류만. 조건은 쓰지 마세요.",
   "target_audience": "학부생|대학원생|전체",
   "register_url": "신청/사전등록 링크 URL or null",
   "description": "행사 요약 2-3문장. 개인 이름/이메일/전화번호 절대 포함 금지."
