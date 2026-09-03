@@ -160,14 +160,17 @@ async function main() {
 
   for (const { classification } of foodEvents) {
     const url = classification.register_url;
-    if (!url || !url.includes("docs.google.com/forms")) continue;
-
-    const formId = extractFormId(url);
-    if (!formId || formCache.has(formId)) continue;
+    if (!url) continue;
+    // Accept Google Forms URLs (full or short)
+    if (!url.includes("google.com/forms") && !url.includes("forms.gle")) continue;
 
     try {
       const result = await parseAndMapForm(url);
-      formCache.set(formId, result);
+      const fid = result.formId || url;
+      if (!formCache.has(fid)) {
+        formCache.set(fid, result);
+        console.log(`  Parsed form: ${url} -> ${Object.keys(result.mapping).length} fields`);
+      }
     } catch (err) {
       console.warn(`  Form parse failed for ${url}:`, err);
     }
@@ -184,10 +187,9 @@ async function main() {
   let skipped = 0;
 
   for (const { classification } of foodEvents) {
-    const formId = classification.register_url
-      ? extractFormId(classification.register_url)
-      : null;
-    const formData = formId ? formCache.get(formId) : null;
+    const url = classification.register_url;
+    const formId = url ? extractFormId(url) : null;
+    const formData = formId ? formCache.get(formId) : (url ? formCache.get(url) : null);
 
     try {
       const result = await upsertEvent(
