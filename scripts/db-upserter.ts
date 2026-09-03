@@ -50,6 +50,84 @@ function computeSourceHash(title: string, startAt: string): string {
 }
 
 /**
+ * Normalize a title for fuzzy comparison by stripping bracketed tags,
+ * common re-announcement prefixes, and collapsing whitespace.
+ */
+function normalizeTitle(title: string): string {
+  return title
+    .replace(/\[.*?\]/g, "")
+    .replace(/^(RE:|FW:|재안내|리마인더|Reminder)\s*/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Compute a 0-1 similarity score between two event titles.
+ * Uses normalized forms: exact match = 1, substring containment = 0.9,
+ * otherwise falls back to character-set overlap ratio.
+ */
+function titleSimilarity(a: string, b: string): number {
+  const na = normalizeTitle(a);
+  const nb = normalizeTitle(b);
+  if (na === nb) return 1;
+  if (na.includes(nb) || nb.includes(na)) return 0.9;
+  // Simple character-set overlap
+  const setA = new Set(na);
+  const setB = new Set(nb);
+  const intersection = [...setA].filter((c) => setB.has(c)).length;
+  return intersection / Math.max(setA.size, setB.size);
+}
+
+/**
+ * Find an existing event on the same day whose title is fuzzy-similar.
+ * Returns the matching row or null.
+ */
+async function findFuzzyMatch(
+  supabase: SupabaseClient,
+  title: string,
+  startAt: string,
+): Promise<Record<string, unknown> | null> {
+  // Derive the date portion (YYYY-MM-DD) from startAt
+  const dayStart = startAt.slice(0, 10);
+  const dayEnd = `${dayStart}T23:59:59.999Z`;
+
+  const { data: sameDayEvents, error } = await supabase
+    .from("events")
+    .select("*")
+    .gte("start_at", dayStart)
+    .lte("start_at", dayEnd);
+
+  if (error) {
+    console.warn("[db] Fuzzy match query failed:", error);
+    return null;
+  }
+
+  if (!sameDayEvents || sameDayEvents.length === 0) return null;
+
+  let bestMatch: Record<string, unknown> | null = null;
+  let bestScore = 0;
+
+  for (const row of sameDayEvents) {
+    const score = titleSimilarity(title, row.title as string);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = row;
+    }
+  }
+
+  if (bestScore > 0.7) {
+    console.log(
+      `[db] Fuzzy match found (score=${bestScore.toFixed(2)}): ` +
+        `"${title}" ~ "${(bestMatch as Record<string, unknown>).title}"`,
+    );
+    return bestMatch;
+  }
+
+  return null;
+}
+
+/**
  * Upsert a single classified event into the `events` table.
  *
  * - If no row with the same `source_hash` exists, INSERT + log "added".
@@ -99,7 +177,38 @@ export async function upsertEvent(
   };
 
   if (!existing) {
-    // INSERT new event
+    // No exact hash match -- try fuzzy matching on same-day events
+    const fuzzyMatch = await findFuzzyMatch(supabase, event.title, event.start_at);
+
+    if (fuzzyMatch) {
+      // Treat as an update to the fuzzy-matched event
+      const diff = buildDiff(fuzzyMatch, newRow);
+
+      if (Object.keys(diff).length === 0) {
+        console.log(`[db] Skipped (fuzzy match, no changes): "${event.title}"`);
+        return { action: "skipped", eventId: fuzzyMatch.id as string };
+      }
+
+      const { error: updateError } = await supabase
+        .from("events")
+        .update({ ...newRow, updated_at: new Date().toISOString() })
+        .eq("id", fuzzyMatch.id);
+
+      if (updateError) {
+        console.error("[db] Fuzzy-match update error:", updateError);
+        throw updateError;
+      }
+
+      await logUpdate(fuzzyMatch.id as string, "updated", diff);
+
+      console.log(
+        `[db] Updated event (fuzzy match): "${event.title}" (${fuzzyMatch.id})`,
+        diff,
+      );
+      return { action: "updated", eventId: fuzzyMatch.id as string, diff };
+    }
+
+    // No match at all -- INSERT new event
     const { data: inserted, error: insertError } = await supabase
       .from("events")
       .insert(newRow)

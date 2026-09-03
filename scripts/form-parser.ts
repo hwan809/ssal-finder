@@ -12,7 +12,8 @@
  *   ANTHROPIC_API_KEY – API key for Claude (shared with llm-classifier)
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+// Dynamic import: only loaded when ANTHROPIC_API_KEY is set
+// import Anthropic from "@anthropic-ai/sdk";
 
 export interface FormField {
   entryId: string;
@@ -237,7 +238,39 @@ function parseFormHtml(html: string): FormField[] {
 }
 
 /**
+ * Heuristic keyword-based mapping of form field labels to profile fields.
+ * Used as a fallback when ANTHROPIC_API_KEY is not available.
+ */
+function heuristicMapFields(fields: FormField[]): FormMapping {
+  const patterns: Array<{ field: ProfileField; keywords: RegExp }> = [
+    { field: "name", keywords: /이름|성명|name|full\s*name/i },
+    { field: "student_id", keywords: /학번|student.?id|학생.?번호/i },
+    { field: "department", keywords: /학과|소속|학부|전공|department|major|college|단과/i },
+    { field: "email", keywords: /이메일|e-?mail|메일/i },
+    { field: "phone", keywords: /전화|휴대|핸드폰|연락처|phone|mobile|tel/i },
+  ];
+
+  const result: FormMapping = {};
+  const usedFields = new Set<string>();
+
+  for (const f of fields) {
+    let matched: ProfileField | null = null;
+    for (const p of patterns) {
+      if (!usedFields.has(p.field) && p.keywords.test(f.label)) {
+        matched = p.field;
+        usedFields.add(p.field);
+        break;
+      }
+    }
+    result[f.entryId] = matched;
+  }
+
+  return result;
+}
+
+/**
  * Use Claude Haiku to map form field labels to profile fields.
+ * Falls back to heuristic keyword matching when ANTHROPIC_API_KEY is not set.
  */
 export async function mapFieldsToProfile(
   fields: FormField[],
@@ -246,9 +279,11 @@ export async function mapFieldsToProfile(
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY is not set.");
+    console.warn("[form-parser] ANTHROPIC_API_KEY not set, using heuristic mapping.");
+    return heuristicMapFields(fields);
   }
 
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey });
 
   const fieldList = fields
