@@ -33,10 +33,10 @@ export function OnboardingSlides({ onComplete }: OnboardingSlidesProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[480px] mx-auto" style={{ background: "var(--bg)" }}>
+    <div className="h-dvh flex flex-col max-w-[480px] mx-auto overflow-hidden" style={{ background: "var(--bg)" }}>
       <div
         ref={sliderRef}
-        className="flex-1 flex transition-transform duration-400"
+        className="flex-1 flex transition-transform duration-400 min-h-0"
         style={{ transitionTimingFunction: "cubic-bezier(.4,0,.2,1)" }}
         onTouchStart={(e) => { startX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
