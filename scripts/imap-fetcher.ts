@@ -1,7 +1,13 @@
 /**
- * IMAP fetcher - two-pass approach like secondary-agent/gmail_tools.py:
- * Pass 1: fast header fetch (subject, from, to, date) for all emails
- * Pass 2: body fetch only for emails that pass privacy filter
+ * IMAP fetcher — single-connection, batch approach:
+ *   fetchEmailsSince: batch headers + batch partial-message bodies in one IMAP session
+ *   fetchBodies: standalone batch body fetch (used by collect.ts after privacy filtering)
+ *
+ * Key optimizations over the original:
+ *   - BODY.PEEK[]<0.51200>: first 50KB of each message (skips large attachments)
+ *   - Batch IMAP commands: all UIDs in one FETCH (eliminates per-email round-trips)
+ *   - Socket timeout (30s) + retry with reconnect on failure
+ *   - Python email.message MIME-tree walk for reliable encoding/charset handling
  */
 
 import { execFileSync } from "child_process";
@@ -20,12 +26,12 @@ export interface FetchedEmail {
 }
 
 /**
- * Combined script: fetches headers (batch) then bodies (BODY.PEEK[1] per UID)
- * in a single IMAP connection. BODY.PEEK[1] fetches only the first MIME part
- * (usually text/plain), avoiding large attachments entirely.
+ * Combined script: batch headers + batch partial-message bodies in one IMAP session.
+ * BODY.PEEK[]<0.51200> fetches first 50KB of each message, skipping large attachments.
+ * Python's email.message MIME-tree walker handles all encoding/charset decoding.
  */
 const COMBINED_SCRIPT = `
-import imaplib, email, json, sys, re, os, time, quopri, base64
+import imaplib, email, json, sys, re, os, time
 from email.header import decode_header, make_header
 from datetime import datetime
 
@@ -53,35 +59,6 @@ if not uids:
     sys.exit(0)
 
 uids = uids[-max_emails:]
-
-# --- Helper: decode a MIME part's transfer encoding + charset ---
-def decode_part(raw_bytes, mime_bytes):
-    encoding = "7bit"
-    charset = "utf-8"
-    content_type = "text/plain"
-    if mime_bytes:
-        mime_msg = email.message_from_bytes(mime_bytes)
-        encoding = mime_msg.get("Content-Transfer-Encoding", "7bit").lower().strip()
-        ct = mime_msg.get("Content-Type", "text/plain")
-        content_type = ct.split(";")[0].strip().lower()
-        cs_match = re.search("charset=[\\\"']?([^\\\"';\\\\s]+)", ct, re.I)
-        if cs_match:
-            charset = cs_match.group(1)
-    if encoding == "base64":
-        try: decoded = base64.b64decode(raw_bytes)
-        except: decoded = raw_bytes
-    elif encoding == "quoted-printable":
-        try: decoded = quopri.decodestring(raw_bytes)
-        except: decoded = raw_bytes
-    else:
-        decoded = raw_bytes
-    try: text = decoded.decode(charset, errors="replace")
-    except: text = decoded.decode("utf-8", errors="replace")
-    if "html" in content_type:
-        text = re.sub(r"<[^>]+>", " ", text)
-        text = text.replace("&nbsp;", " ")
-        text = re.sub(r"\\s+", " ", text).strip()
-    return text.strip()[:10000]
 
 # --- Pass 1: batch header fetch (fast) ---
 uid_set = b",".join(uids)
@@ -189,7 +166,7 @@ with open(output_file, "w", encoding="utf-8") as f:
 `;
 
 const BODY_SCRIPT = `
-import imaplib, email, json, sys, re, os, time, quopri, base64
+import imaplib, email, json, sys, re, os, time
 from email.header import decode_header, make_header
 
 user = os.environ["GMAIL_USER"]
@@ -206,78 +183,70 @@ def connect():
 
 conn = connect()
 
-def decode_part(raw_bytes, mime_bytes):
-    encoding = "7bit"
-    charset = "utf-8"
-    content_type = "text/plain"
-    if mime_bytes:
-        mime_msg = email.message_from_bytes(mime_bytes)
-        encoding = mime_msg.get("Content-Transfer-Encoding", "7bit").lower().strip()
-        ct = mime_msg.get("Content-Type", "text/plain")
-        content_type = ct.split(";")[0].strip().lower()
-        cs_match = re.search("charset=[\\\"']?([^\\\"';\\\\s]+)", ct, re.I)
-        if cs_match:
-            charset = cs_match.group(1)
-    if encoding == "base64":
-        try: decoded = base64.b64decode(raw_bytes)
-        except: decoded = raw_bytes
-    elif encoding == "quoted-printable":
-        try: decoded = quopri.decodestring(raw_bytes)
-        except: decoded = raw_bytes
-    else:
-        decoded = raw_bytes
-    try: text = decoded.decode(charset, errors="replace")
-    except: text = decoded.decode("utf-8", errors="replace")
-    if "html" in content_type:
-        text = re.sub(r"<[^>]+>", " ", text)
+def get_body(msg):
+    html_fallback = None
+    for part in (msg.walk() if msg.is_multipart() else [msg]):
+        ctype = part.get_content_type()
+        disp = str(part.get("Content-Disposition", ""))
+        if "attachment" in disp:
+            continue
+        try:
+            payload = part.get_payload(decode=True)
+        except:
+            continue
+        if not payload:
+            continue
+        charset = part.get_content_charset() or "utf-8"
+        try:
+            text = payload.decode(charset, errors="replace")
+        except:
+            text = payload.decode("utf-8", errors="replace")
+        if ctype == "text/plain":
+            return text.strip()[:10000]
+        if ctype == "text/html" and html_fallback is None:
+            html_fallback = text
+    if html_fallback:
+        text = re.sub(r"<[^>]+>", " ", html_fallback)
         text = text.replace("&nbsp;", " ")
         text = re.sub(r"\\s+", " ", text).strip()
-    return text.strip()[:10000]
+        return text[:10000]
+    return ""
 
 uid_list = [u.strip() for u in uids_str.split(",") if u.strip()]
 total = len(uid_list)
 results = {}
 
-for idx, uid_s in enumerate(uid_list, 1):
-    sys.stderr.write(f"[imap] Fetching body {idx}/{total} (UID {uid_s})\\n")
-    for attempt in range(2):
-        try:
-            typ, data = conn.uid("fetch", uid_s.encode(), "(BODY.PEEK[1] BODY.PEEK[1.MIME])")
-            if typ != "OK":
-                raise Exception(f"FETCH returned {typ}")
-            body_bytes = None
-            mime_bytes = None
-            for item in data:
-                if not isinstance(item, tuple) or len(item) < 2:
-                    continue
-                meta = item[0].decode("utf-8", errors="replace")
-                if "BODY[1.MIME]" in meta:
-                    mime_bytes = item[1]
-                elif "BODY[1]" in meta:
-                    body_bytes = item[1]
-            if body_bytes is None:
-                typ2, data2 = conn.uid("fetch", uid_s.encode(), "(BODY.PEEK[TEXT])")
-                if typ2 == "OK":
-                    for item in data2:
-                        if isinstance(item, tuple) and len(item) >= 2:
-                            body_bytes = item[1]
-                            break
-            if body_bytes:
-                results[uid_s] = decode_part(body_bytes, mime_bytes)
-            else:
-                results[uid_s] = ""
-            break
-        except Exception as e:
-            if attempt == 0:
-                sys.stderr.write(f"[imap] UID {uid_s} failed (attempt 1): {e}, retrying in 3s...\\n")
-                time.sleep(3)
-                try:
-                    conn.noop()
-                except:
-                    conn = connect()
-            else:
-                sys.stderr.write(f"[imap] UID {uid_s} failed after retry: {e}\\n")
-                results[uid_s] = ""
+# Batch fetch partial messages (first 50KB, skips large attachments)
+uid_set = ",".join(uid_list).encode()
+sys.stderr.write(f"[imap] Fetching bodies (batch of {total}, first 50KB each)\\n")
+
+for attempt in range(2):
+    try:
+        typ, data = conn.uid("fetch", uid_set, "(BODY.PEEK[]<0.51200>)")
+        if typ != "OK":
+            raise Exception(f"FETCH returned {typ}")
+        for item in data:
+            if not isinstance(item, tuple) or len(item) < 2:
+                continue
+            meta = item[0].decode("utf-8", errors="replace")
+            m = re.search(r"UID (\\d+)", meta)
+            if not m:
+                continue
+            uid_s = m.group(1)
+            msg = email.message_from_bytes(item[1])
+            results[uid_s] = get_body(msg)
+        sys.stderr.write(f"[imap] Bodies decoded: {len(results)}/{total}\\n")
+        break
+    except Exception as e:
+        if attempt == 0:
+            sys.stderr.write(f"[imap] Body batch failed (attempt 1): {e}, retrying in 3s...\\n")
+            time.sleep(3)
+            try:
+                conn.noop()
+            except:
+                conn = connect()
+        else:
+            sys.stderr.write(f"[imap] Body batch failed after retry: {e}\\n")
 
 conn.logout()
 with open(output_file, "w", encoding="utf-8") as f:
@@ -306,20 +275,13 @@ export async function fetchEmailsSince(sinceDate: Date): Promise<FetchedEmail[]>
 export async function fetchBodies(uids: number[]): Promise<Record<number, string>> {
   if (uids.length === 0) return {};
   const out: Record<number, string> = {};
-  const batchSize = 3;
 
-  for (let i = 0; i < uids.length; i += batchSize) {
-    const batch = uids.slice(i, i + batchSize);
-    try {
-      const result = await runPython(BODY_SCRIPT, [batch.join(","), ""]);
-      const parsed = JSON.parse(result) as Record<string, string>;
-      for (const [k, v] of Object.entries(parsed)) out[Number(k)] = v;
-    } catch (err) {
-      console.warn(`[imap] Body batch failed:`, batch);
-    }
-    if (i + batchSize < uids.length) {
-      await new Promise((r) => setTimeout(r, 2000));
-    }
+  try {
+    const result = await runPython(BODY_SCRIPT, [uids.join(","), ""]);
+    const parsed = JSON.parse(result) as Record<string, string>;
+    for (const [k, v] of Object.entries(parsed)) out[Number(k)] = v;
+  } catch (err) {
+    console.warn(`[imap] Body batch failed:`, err);
   }
 
   console.log(`[imap] Bodies fetched: ${Object.keys(out).length}/${uids.length}`);
