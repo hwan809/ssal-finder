@@ -31,7 +31,9 @@ function getSupabase(): SupabaseClient {
         "SUPABASE_URL or SUPABASE_SERVICE_KEY is not set.",
       );
     }
-    _supabase = createClient(url, key);
+    _supabase = createClient(url, key, {
+      realtime: { enabled: false },
+    });
   }
   return _supabase;
 }
