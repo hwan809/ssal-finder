@@ -1,21 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Event, FoodType } from "@/lib/types";
-import { MOCK_EVENTS, MOCK_LOGS } from "@/lib/mock-data";
-import { supabase } from "@/lib/supabase";
-import { MiniCalendar } from "@/components/calendar/mini-calendar";
-import { EventCard } from "@/components/events/event-card";
-import { FoodFilter } from "@/components/events/food-filter";
-import { FeedTimeline } from "@/components/feed/feed-timeline";
-import { S } from "@/lib/strings";
 import Link from "next/link";
+import type { Event, FoodType } from "@/lib/types";
+import { MOCK_EVENTS } from "@/lib/mock-data";
+import { supabase } from "@/lib/supabase";
+import { FOOD_ICONS } from "@/lib/colors";
+import { formatTime } from "@/lib/calendar-utils";
+import { S } from "@/lib/strings";
+import { Header } from "@/components/layout/header";
+import { Recommendation } from "@/components/home/recommendation";
+import { MonthCalendar } from "@/components/home/month-calendar";
+import { FoodFilter } from "@/components/events/food-filter";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default function EventsPage() {
-  const [filter, setFilter] = useState<FoodType | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [events, setEvents] = useState<Event[]>(MOCK_EVENTS);
+  const [filter, setFilter] = useState<FoodType | null>(null);
+  const [sheetDate, setSheetDate] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -33,112 +36,134 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
 
-  const filtered = events.filter((e) => {
-    if (filter && e.food_type !== filter) return false;
-    if (selectedDate && !e.start_at.startsWith(selectedDate)) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      if (!e.title.toLowerCase().includes(q) && !e.food_type.includes(q) && !(e.food_note || "").toLowerCase().includes(q))
-        return false;
-    }
-    return true;
-  });
+  const filtered = events.filter((e) => !filter || e.food_type === filter);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const upcoming = filtered.filter((e) => e.start_at.slice(0, 10) >= todayStr);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const todayEvents = filtered.filter((e) => e.start_at.slice(0, 10) === today);
-  const futureEvents = filtered.filter((e) => e.start_at.slice(0, 10) > today);
-  const pastEvents = filtered.filter((e) => e.start_at.slice(0, 10) < today);
+  // Group by date for the list section
+  const grouped = new Map<string, Event[]>();
+  for (const e of upcoming) {
+    const d = e.start_at.slice(0, 10);
+    if (!grouped.has(d)) grouped.set(d, []);
+    grouped.get(d)!.push(e);
+  }
+
+  const sheetEvents = sheetDate
+    ? filtered.filter((e) => e.start_at.slice(0, 10) === sheetDate)
+    : [];
+
+  function dateLabel(ds: string): string {
+    const d = new Date(ds + "T00:00:00");
+    const diff = Math.round(
+      (d.getTime() - new Date(todayStr + "T00:00:00").getTime()) / 86400000,
+    );
+    const dayName = S.DAYS[d.getDay()];
+    if (diff === 0) return "오늘";
+    if (diff === 1) return `내일 ${d.getMonth() + 1}/${d.getDate()} ${dayName}`;
+    return `${d.getMonth() + 1}/${d.getDate()} ${dayName}`;
+  }
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-50 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-lg border-b border-stone-200 dark:border-stone-800">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-extrabold text-base sm:text-lg shrink-0 whitespace-nowrap" style={{ letterSpacing: "-0.03em" }}>
-            <span className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center text-xs sm:text-sm emoji">🍚</span>
-            <span className="hidden sm:inline">{S.APP_SHORT}</span>
+    <ToastProvider>
+      <div className="max-w-[480px] mx-auto min-h-screen">
+        <Header>
+          <Link href="/profile" className="text-[13px]" style={{ color: "var(--g5)" }}>
+            프로필
           </Link>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-end">
-            <input
-              type="text"
-              placeholder={S.SEARCH_PLACEHOLDER}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-full px-3 sm:px-4 py-1.5 text-sm min-w-0 flex-1 max-w-64 focus:outline-none focus:border-orange-500 transition-colors"
-            />
-            <Link
-              href="/submit"
-              className="shrink-0 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-lg bg-orange-600 text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center"
-            >
-              <span className="sm:hidden">+</span>
-              <span className="hidden sm:inline">+ {S.SUBMIT_TITLE}</span>
-            </Link>
-            <Link
-              href="/profile"
-              className="shrink-0 w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-800 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
-            >
-              👤
-            </Link>
-            <Link
-              href="/feed"
-              className="shrink-0 relative w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-800 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
-            >
-              🔔
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-500 border-2 border-stone-50 dark:border-stone-950" />
-            </Link>
-          </div>
-        </div>
-      </header>
+          <Link href="/submit" className="text-[13px]" style={{ color: "var(--g5)" }}>
+            + 제보
+          </Link>
+        </Header>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[300px_1fr] min-h-[calc(100vh-57px)]">
-        <aside className="lg:border-r border-stone-200 dark:border-stone-800 p-5 lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:overflow-y-auto">
+        <Recommendation events={filtered} />
+
+        <div style={{ height: 6, background: "var(--g9)" }} />
+
+        <MonthCalendar events={filtered} onSelectDate={setSheetDate} />
+
+        <div style={{ height: 6, background: "var(--g9)" }} />
+
+        <div className="px-5 pb-3 pt-4">
           <FoodFilter selected={filter} onSelect={setFilter} />
-          <div className="mt-5">
-            <MiniCalendar events={events} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          </div>
-          <div className="mt-6 hidden lg:block">
-            <div className="text-[11px] font-bold text-stone-400 dark:text-stone-600 uppercase tracking-wider mb-3">
-              {S.SECTION_RECENT_UPDATES}
-            </div>
-            <FeedTimeline logs={MOCK_LOGS} />
-          </div>
-        </aside>
+        </div>
 
-        <main className="p-5">
-          {todayEvents.length > 0 && (
-            <>
-              <div className="text-xs font-bold text-stone-400 mb-2">
-                {S.SECTION_TODAY} <span className="text-orange-600">{todayEvents.length}{S.EVENTS_COUNT_UNIT}</span>
+        <div className="px-5 pb-20">
+          {[...grouped.entries()].map(([ds, evts]) => (
+            <div key={ds}>
+              <div
+                className="text-[12px] font-bold pt-4 pb-2"
+                style={{ color: "var(--g5)", letterSpacing: "0.01em" }}
+              >
+                {dateLabel(ds)}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
-                {todayEvents.map((e) => <EventCard key={e.id} event={e} />)}
-              </div>
-            </>
+              {evts.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/events/${event.id}`}
+                  className="flex items-baseline gap-2.5 py-2.5 active:opacity-60"
+                  style={{ borderTop: "1px solid var(--g9)" }}
+                >
+                  <span
+                    className="text-[12px] font-semibold w-[38px] text-right shrink-0"
+                    style={{ color: "var(--g5)", fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {formatTime(event.start_at)}
+                  </span>
+                  <span className="emoji text-[16px] shrink-0">{FOOD_ICONS[event.food_type]}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[14px] font-bold" style={{ letterSpacing: "-0.01em" }}>
+                      {event.food_note || event.food_type}
+                    </div>
+                    <div className="text-[12px] mt-0.5" style={{ color: "var(--g5)" }}>
+                      {event.title} · {event.location || ""}
+                    </div>
+                  </div>
+                  {event.register_url && (
+                    <span className="text-[10px] font-extrabold shrink-0" style={{ color: "var(--point)" }}>
+                      신청
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          ))}
+          {upcoming.length === 0 && (
+            <div className="text-center py-20 text-[14px]" style={{ color: "var(--g5)" }}>
+              {S.EVENTS_EMPTY}
+            </div>
           )}
-          {futureEvents.length > 0 && (
-            <>
-              <div className="text-xs font-bold text-stone-400 mb-2">
-                {S.SECTION_UPCOMING} <span className="text-orange-600">{futureEvents.length}{S.EVENTS_COUNT_UNIT}</span>
+        </div>
+
+        <BottomSheet open={!!sheetDate} onClose={() => setSheetDate(null)}>
+          <div className="px-5 pb-6">
+            <div className="text-[14px] font-bold py-3">
+              {sheetDate && dateLabel(sheetDate)}
+            </div>
+            {sheetEvents.length === 0 && (
+              <div className="text-[13px] py-4" style={{ color: "var(--g5)" }}>
+                이 날은 행사가 없어요
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {futureEvents.map((e) => <EventCard key={e.id} event={e} />)}
-              </div>
-            </>
-          )}
-          {pastEvents.length > 0 && (
-            <>
-              <div className="text-xs font-bold text-stone-400 mb-2 mt-6 opacity-60">
-                지난 행사 <span className="text-stone-400">{pastEvents.length}{S.EVENTS_COUNT_UNIT}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 opacity-50">
-                {pastEvents.map((e) => <EventCard key={e.id} event={e} />)}
-              </div>
-            </>
-          )}
-          {filtered.length === 0 && (
-            <div className="text-center text-stone-400 py-20 text-sm">{S.EVENTS_EMPTY}</div>
-          )}
-        </main>
+            )}
+            {sheetEvents.map((event) => (
+              <Link
+                key={event.id}
+                href={`/events/${event.id}`}
+                className="flex items-center gap-3 py-3 active:opacity-60"
+                style={{ borderTop: "1px solid var(--g9)" }}
+                onClick={() => setSheetDate(null)}
+              >
+                <span className="emoji text-[24px]">{FOOD_ICONS[event.food_type]}</span>
+                <div className="flex-1">
+                  <div className="text-[14px] font-bold">{event.food_note || event.food_type}</div>
+                  <div className="text-[12px]" style={{ color: "var(--g5)" }}>
+                    {formatTime(event.start_at)} · {event.location || ""}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </BottomSheet>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
