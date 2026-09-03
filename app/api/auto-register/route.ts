@@ -170,9 +170,20 @@ ${fieldList}
       });
     } catch {}
 
+    // Save registration record
+    try {
+      await supabase.from("registrations").insert({
+        event_id: eventId,
+        profile_name: profile.name,
+        profile_student_id: profile.student_id || null,
+        form_response: formValues,
+      });
+    } catch {}
+
     return NextResponse.json({
       ok: true,
       submitted: Object.keys(formValues).length,
+      formValues,
       formUrl,
       status: submitRes.status,
     });

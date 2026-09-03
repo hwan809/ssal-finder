@@ -47,6 +47,16 @@ export interface Submission {
   created_at: string;
 }
 
+export interface Registration {
+  id: string;
+  event_id: string;
+  profile_name: string;
+  profile_student_id: string | null;
+  form_response: Record<string, string> | null;
+  created_at: string;
+  event?: { title: string; food_type: string; start_at: string } | null;
+}
+
 export interface Attendee {
   id: string;
   event_id: string;
