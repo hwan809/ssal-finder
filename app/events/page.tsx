@@ -26,7 +26,7 @@ export default function EventsPage() {
       const { data } = await supabase
         .from("events")
         .select("*")
-        .gte("start_at", new Date(Date.now() - 86400000).toISOString())
+        .gte("start_at", new Date(Date.now() - 7 * 86400000).toISOString())
         .order("start_at", { ascending: true });
       setEvents(data?.length ? data : MOCK_EVENTS);
     }
@@ -47,6 +47,7 @@ export default function EventsPage() {
   const today = new Date().toISOString().slice(0, 10);
   const todayEvents = filtered.filter((e) => e.start_at.slice(0, 10) === today);
   const futureEvents = filtered.filter((e) => e.start_at.slice(0, 10) > today);
+  const pastEvents = filtered.filter((e) => e.start_at.slice(0, 10) < today);
 
   return (
     <div className="min-h-screen">
@@ -114,6 +115,16 @@ export default function EventsPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {futureEvents.map((e) => <EventCard key={e.id} event={e} />)}
+              </div>
+            </>
+          )}
+          {pastEvents.length > 0 && (
+            <>
+              <div className="text-xs font-bold text-stone-400 mb-2 mt-6 opacity-60">
+                지난 행사 <span className="text-stone-400">{pastEvents.length}{S.EVENTS_COUNT_UNIT}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 opacity-50">
+                {pastEvents.map((e) => <EventCard key={e.id} event={e} />)}
               </div>
             </>
           )}
