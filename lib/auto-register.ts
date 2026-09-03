@@ -6,10 +6,6 @@ export interface UserProfile {
   phone: string;
 }
 
-export interface FormMapping {
-  [entryId: string]: keyof UserProfile | null;
-}
-
 const PROFILE_KEY = "ssal-finder-profile";
 
 export function getProfile(): UserProfile | null {
@@ -31,40 +27,20 @@ export function clearProfile(): void {
   localStorage.removeItem(PROFILE_KEY);
 }
 
-export function extractFormId(url: string): string | null {
-  const match = url.match(/forms\/d\/e\/([a-zA-Z0-9_-]+)/);
-  return match?.[1] || null;
-}
-
-export function buildFormResponseUrl(formId: string): string {
-  return `https://docs.google.com/forms/d/e/${formId}/formResponse`;
-}
-
-export async function submitForm(
-  formId: string,
-  mapping: FormMapping,
+export async function autoRegister(
+  eventId: string,
   profile: UserProfile,
-): Promise<boolean> {
-  const url = buildFormResponseUrl(formId);
-  const body = new URLSearchParams();
-
-  for (const [entryId, profileField] of Object.entries(mapping)) {
-    if (!profileField) continue;
-    const value = profile[profileField];
-    if (value) {
-      body.append(entryId, value);
-    }
-  }
-
+): Promise<{ ok: boolean; error?: string }> {
   try {
-    await fetch(url, {
+    const res = await fetch("/api/auto-register", {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId, profile }),
     });
-    return true;
-  } catch {
-    return false;
+    const data = await res.json();
+    if (!res.ok) return { ok: false, error: data.error || "failed" };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: String(err) };
   }
 }

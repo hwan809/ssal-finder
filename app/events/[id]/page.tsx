@@ -131,6 +131,7 @@ function EventDetailContent({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex flex-col gap-2">
           <AutoRegisterButton
             ref={autoRegisterRef}
+            eventId={id}
             formId={event.form_id}
             formMapping={event.form_mapping}
             registerUrl={event.register_url}

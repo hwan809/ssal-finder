@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
-import { getProfile, submitForm, type FormMapping } from "@/lib/auto-register";
+import { getProfile, autoRegister } from "@/lib/auto-register";
 import { S } from "@/lib/strings";
 
 interface AutoRegisterButtonProps {
+  eventId: string;
   formId: string | null;
   formMapping: Record<string, string> | null;
   registerUrl: string | null;
@@ -18,7 +19,7 @@ export interface AutoRegisterButtonHandle {
 type Status = "idle" | "loading" | "done" | "fail";
 
 export const AutoRegisterButton = forwardRef<AutoRegisterButtonHandle, AutoRegisterButtonProps>(
-  function AutoRegisterButton({ formId, formMapping, registerUrl, onNeedProfile }, ref) {
+  function AutoRegisterButton({ eventId, formId, formMapping, registerUrl, onNeedProfile }, ref) {
     const [status, setStatus] = useState<Status>("idle");
     const hasAutoRegister = !!(formId && formMapping && Object.keys(formMapping).length > 0);
 
@@ -31,10 +32,10 @@ export const AutoRegisterButton = forwardRef<AutoRegisterButtonHandle, AutoRegis
       if (!formId || !formMapping) return;
 
       setStatus("loading");
-      const ok = await submitForm(formId, formMapping as FormMapping, profile);
-      setStatus(ok ? "done" : "fail");
-      if (ok) setTimeout(() => setStatus("idle"), 3000);
-    }, [formId, formMapping, onNeedProfile]);
+      const result = await autoRegister(eventId, profile);
+      setStatus(result.ok ? "done" : "fail");
+      if (!result.ok) setTimeout(() => setStatus("idle"), 3000);
+    }, [eventId, formId, formMapping, onNeedProfile]);
 
     useImperativeHandle(ref, () => ({ retry: handleAutoRegister }), [handleAutoRegister]);
 
