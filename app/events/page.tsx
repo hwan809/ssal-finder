@@ -125,7 +125,7 @@ function EventsContent() {
     );
     const dayName = S.DAYS[d.getDay()];
     if (diff === 0) return "오늘";
-    if (diff === 1) return `내일 ${d.getMonth() + 1}/${d.getDate()} ${dayName}`;
+    if (diff === 1) return "내일";
     return `${d.getMonth() + 1}/${d.getDate()} ${dayName}`;
   }
 
