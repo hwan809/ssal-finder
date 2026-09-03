@@ -18,9 +18,14 @@ const SYSTEM_PROMPT = `KAIST 캠퍼스 행사 메일을 분석하여 식사/다�
   "food_type": "버거|도시락|샌드위치|간식|식사|기타",
   "food_note": "조건 (선착순, 사전신청 등)",
   "target_audience": "학부생|대학원생|전체",
-  "register_url": "신청 링크 URL or null",
+  "register_url": "신청/사전등록 링크 URL or null",
   "description": "행사 요약 2-3문장. 개인 이름/이메일/전화번호 절대 포함 금지."
 }
+
+register_url 추출 규칙:
+- 본문에 Google Forms 링크(forms.gle/xxx 또는 docs.google.com/forms/...)가 있으면 반드시 추출
+- "사전신청", "사전등록", "신청 링크", "등록 링크" 근처의 URL을 우선 사용
+- 여러 링크가 있으면 신청/등록 용도의 링크를 선택
 
 반드시 유효한 JSON만 출력하세요. 다른 텍스트는 포함하지 마세요.`;
 

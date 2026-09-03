@@ -364,8 +364,13 @@ export async function mapFieldsToProfile(
 export async function parseAndMapForm(
   formUrl: string,
 ): Promise<{ formId: string | null; mapping: FormMapping }> {
-  const formId = extractFormId(formUrl);
-  console.log(`[form-parser] Parsing form: ${formUrl} (id: ${formId})`);
+  // Resolve short URL first to get form_id
+  let resolvedUrl = formUrl;
+  if (formUrl.includes("forms.gle/") || !formUrl.includes("docs.google.com/forms")) {
+    resolvedUrl = await resolveShortUrl(formUrl);
+  }
+  const formId = extractFormId(resolvedUrl);
+  console.log(`[form-parser] Parsing form: ${formUrl} -> ${resolvedUrl} (id: ${formId})`);
 
   try {
     const fields = await extractFormFields(formUrl);

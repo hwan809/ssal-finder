@@ -107,7 +107,15 @@ async function main() {
   // Step 3: Mask PII and send to LLM
   // -----------------------------------------------------------------------
   console.log("\n--- Step 3: LLM classification ---");
-  const maskedItems = filtered.map((email) => maskForLLM(email));
+  // Extract URLs from body and append to help LLM find register links
+  const maskedItems = filtered.map((email) => {
+    const masked = maskForLLM(email);
+    const urls = (email.body || "").match(/https?:\/\/[^\s<>"')\]]+/g) || [];
+    if (urls.length > 0) {
+      masked.body += "\n\n[본문에 포함된 링크들]\n" + urls.join("\n");
+    }
+    return masked;
+  });
 
   const classifications = await classifyEmails(maskedItems);
 

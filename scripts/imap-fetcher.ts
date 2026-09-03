@@ -83,16 +83,11 @@ def decode_part(raw_bytes, mime_bytes):
         text = re.sub(r"\\s+", " ", text).strip()
     return text.strip()[:10000]
 
-# --- Single batch fetch: headers + first MIME part ---
+# --- Pass 1: batch header fetch (fast) ---
 uid_set = b",".join(uids)
-typ, data = conn.uid("fetch", uid_set,
-    "(FLAGS BODY.PEEK[HEADER.FIELDS (FROM TO SUBJECT DATE)] BODY.PEEK[1] BODY.PEEK[1.MIME])")
+typ, data = conn.uid("fetch", uid_set, "(FLAGS BODY.PEEK[HEADER.FIELDS (FROM TO SUBJECT DATE)])")
 
 header_map = {}
-uid_headers = {}
-uid_bodies = {}
-uid_mimes = {}
-
 for item in data:
     if not isinstance(item, tuple) or len(item) < 2:
         continue
@@ -101,15 +96,7 @@ for item in data:
     if not m_uid:
         continue
     uid_val = int(m_uid.group(1))
-    if "BODY[HEADER.FIELDS" in meta:
-        uid_headers[uid_val] = item[1]
-    elif "BODY[1.MIME]" in meta:
-        uid_mimes[uid_val] = item[1]
-    elif "BODY[1]" in meta:
-        uid_bodies[uid_val] = item[1]
-
-for uid_val, raw_hdrs in uid_headers.items():
-    headers = email.message_from_bytes(raw_hdrs)
+    headers = email.message_from_bytes(item[1])
     def hdr(n):
         raw = headers.get(n, "")
         if not raw: return ""
@@ -117,57 +104,82 @@ for uid_val, raw_hdrs in uid_headers.items():
         except: return str(raw).strip()
     to_raw = hdr("To")
     to_list = [a.strip() for a in to_raw.split(",") if a.strip()]
-    body_text = ""
-    if uid_val in uid_bodies:
-        body_text = decode_part(uid_bodies[uid_val], uid_mimes.get(uid_val))
     header_map[uid_val] = {
         "uid": uid_val,
         "subject": hdr("Subject"),
         "from": hdr("From"),
         "to": to_list,
         "date": hdr("Date"),
-        "body": body_text,
+        "body": "",
     }
 
-sys.stderr.write(f"[imap] Fetched headers+bodies: {len(header_map)}\\n")
+sys.stderr.write(f"[imap] Headers fetched: {len(header_map)}\\n")
 
-# --- Fallback: UIDs without body (non-multipart messages) - batch BODY.PEEK[TEXT] ---
-missing = [u for u in uids if int(u.decode()) in header_map and not header_map[int(u.decode())].get("body")]
-if missing:
-    sys.stderr.write(f"[imap] Fallback TEXT fetch for {len(missing)} UID(s)\\n")
-    for attempt in range(2):
+# --- Pass 2: batch full-message fetch + MIME-tree body extraction ---
+def get_body(msg):
+    html_fallback = None
+    for part in (msg.walk() if msg.is_multipart() else [msg]):
+        ctype = part.get_content_type()
+        disp = str(part.get("Content-Disposition", ""))
+        if "attachment" in disp:
+            continue
         try:
-            missing_set = b",".join(missing)
-            typ, data = conn.uid("fetch", missing_set, "(BODY.PEEK[TEXT])")
-            if typ == "OK":
-                for item in data:
-                    if not isinstance(item, tuple) or len(item) < 2:
-                        continue
-                    meta = item[0].decode("utf-8", errors="replace")
-                    m = re.search(r"UID (\\d+)", meta)
-                    if not m:
-                        continue
-                    u = int(m.group(1))
-                    if u in header_map:
-                        raw = item[1]
-                        try: text = raw.decode("utf-8", errors="replace")
-                        except: text = str(raw)
-                        if "<html" in text.lower() or "<body" in text.lower():
-                            text = re.sub(r"<[^>]+>", " ", text)
-                            text = text.replace("&nbsp;", " ")
-                            text = re.sub(r"\\s+", " ", text).strip()
-                        header_map[u]["body"] = text.strip()[:10000]
-            break
-        except Exception as e:
-            if attempt == 0:
-                sys.stderr.write(f"[imap] Fallback failed (attempt 1): {e}, retrying in 3s...\\n")
-                time.sleep(3)
-                try:
-                    conn.noop()
-                except:
-                    conn = connect()
-            else:
-                sys.stderr.write(f"[imap] Fallback failed after retry: {e}\\n")
+            payload = part.get_payload(decode=True)
+        except:
+            continue
+        if not payload:
+            continue
+        charset = part.get_content_charset() or "utf-8"
+        try:
+            text = payload.decode(charset, errors="replace")
+        except:
+            text = payload.decode("utf-8", errors="replace")
+        if ctype == "text/plain":
+            return text.strip()[:10000]
+        if ctype == "text/html" and html_fallback is None:
+            html_fallback = text
+    if html_fallback:
+        text = re.sub(r"<[^>]+>", " ", html_fallback)
+        text = text.replace("&nbsp;", " ")
+        text = re.sub(r"\\s+", " ", text).strip()
+        return text[:10000]
+    return ""
+
+for attempt in range(2):
+    try:
+        sys.stderr.write(f"[imap] Fetching messages (batch of {len(uids)}, first 50KB each)...\\n")
+        typ, data = conn.uid("fetch", uid_set, "(BODY.PEEK[]<0.51200>)")
+        if typ != "OK":
+            raise Exception(f"FETCH returned {typ}")
+
+        decoded_count = 0
+        for item in data:
+            if not isinstance(item, tuple) or len(item) < 2:
+                continue
+            meta = item[0].decode("utf-8", errors="replace")
+            m = re.search(r"UID (\\d+)", meta)
+            if not m:
+                continue
+            u = int(m.group(1))
+            if u in header_map:
+                msg = email.message_from_bytes(item[1])
+                body_text = get_body(msg)
+                if body_text:
+                    header_map[u]["body"] = body_text
+                    decoded_count += 1
+
+        sys.stderr.write(f"[imap] Bodies decoded: {decoded_count}/{len(uids)}\\n")
+        break
+    except Exception as e:
+        if attempt == 0:
+            sys.stderr.write(f"[imap] Body batch failed (attempt 1): {e}, retrying in 3s...\\n")
+            time.sleep(3)
+            try:
+                conn.noop()
+            except:
+                conn = connect()
+        else:
+            sys.stderr.write(f"[imap] Body batch failed after retry: {e}\\n")
 
 conn.logout()
 results = [header_map[int(u.decode())] for u in uids if int(u.decode()) in header_map]
