@@ -132,6 +132,9 @@ function EventsContent() {
   return (
     <div className="max-w-[480px] mx-auto min-h-screen">
       <Header>
+        <Link href="/my-events" className="text-[13px]" style={{ color: "var(--g5)" }}>
+          나의 행사
+        </Link>
         <Link href="/profile" className="text-[13px]" style={{ color: "var(--g5)" }}>
           프로필
         </Link>
