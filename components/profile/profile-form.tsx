@@ -43,19 +43,19 @@ export function ProfileForm({ onClose }: ProfileFormProps) {
   ];
 
   return (
-    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
+    <div>
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-bold">{S.PROFILE_TITLE}</h3>
+        <h3 className="text-[14px] font-bold">{S.PROFILE_TITLE}</h3>
         {onClose && (
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 text-xs">✕</button>
+          <button onClick={onClose} className="text-[12px]" style={{ color: "var(--g5)" }}>✕</button>
         )}
       </div>
-      <p className="text-xs text-stone-400 dark:text-stone-500 mb-4">{S.PROFILE_DESC}</p>
+      <p className="text-[12px] mb-5" style={{ color: "var(--g5)" }}>{S.PROFILE_DESC}</p>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {fields.map(({ key, label, placeholder }) => (
           <div key={key}>
-            <label className="block text-xs font-semibold text-stone-500 dark:text-stone-400 mb-1">
+            <label className="block text-[12px] font-semibold mb-1.5" style={{ color: "var(--g5)" }}>
               {label}
             </label>
             <input
@@ -63,32 +63,31 @@ export function ProfileForm({ onClose }: ProfileFormProps) {
               value={form[key]}
               onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
               placeholder={placeholder}
-              className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500 transition-colors"
+              className="w-full px-1 py-2 text-[14px] focus:outline-none"
+              style={{ background: "transparent", borderBottom: "1.5px solid var(--g7)", borderRadius: 0 }}
             />
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2 mt-5">
         <button
           onClick={handleSave}
-          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
-            saved
-              ? "bg-green-500 text-white"
-              : "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:opacity-90"
-          }`}
+          className="flex-1 py-2.5 text-[14px] font-bold transition-opacity"
+          style={{ background: "var(--fg)", color: "var(--bg)" }}
         >
           {saved ? S.PROFILE_SAVED : S.PROFILE_SAVE}
         </button>
         <button
           onClick={handleClear}
-          className="px-4 py-2 rounded-lg text-sm font-semibold text-stone-500 border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+          className="px-4 py-2.5 text-[13px] font-semibold"
+          style={{ border: "1.5px solid var(--g7)", color: "var(--g5)" }}
         >
           {S.PROFILE_CLEAR}
         </button>
       </div>
 
-      <p className="text-[10px] text-stone-400 dark:text-stone-600 mt-3 text-center">
+      <p className="text-[11px] mt-4 text-center" style={{ color: "var(--g5)" }}>
         🔒 {S.PRIVACY_NOTICE}
       </p>
     </div>

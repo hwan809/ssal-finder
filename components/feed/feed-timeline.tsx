@@ -15,27 +15,37 @@ const ACTION_LABEL = {
 
 export function FeedTimeline({ logs }: FeedTimelineProps) {
   return (
-    <div className="divide-y divide-stone-200 dark:divide-stone-800">
+    <div>
       {logs.map((log) => {
         const foodType = log.event?.food_type as FoodType | undefined;
         const icon = foodType ? FOOD_ICONS[foodType] : null;
         return (
-          <div key={log.id} className="flex gap-3 py-3 text-sm">
-            <span className="text-stone-400 dark:text-stone-600 tabular-nums text-xs w-14 shrink-0 pt-0.5">
+          <div
+            key={log.id}
+            className="flex gap-3 py-3 text-[14px]"
+            style={{ borderTop: "1px solid var(--g9)" }}
+          >
+            <span
+              className="tabular-nums text-[12px] w-14 shrink-0 pt-0.5"
+              style={{ color: "var(--g5)", fontVariantNumeric: "tabular-nums" }}
+            >
               {timeAgo(log.created_at)}
             </span>
-            <div className="text-stone-500 dark:text-stone-400">
+            <div style={{ color: "var(--g5)" }}>
               {icon && (
                 <span className="mr-1">
                   <span className="emoji">{icon}</span> {foodType}
                 </span>
               )}
-              <strong className="text-stone-900 dark:text-stone-100 font-semibold">
+              <strong className="font-semibold" style={{ color: "var(--fg)" }}>
                 {log.event?.title || S.FEED_UNKNOWN_EVENT}
               </strong>{" "}
               {ACTION_LABEL[log.action]}
               {log.action === "added" && (
-                <span className="ml-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300">
+                <span
+                  className="ml-1 text-[10px] font-extrabold"
+                  style={{ color: "var(--point)" }}
+                >
                   {S.FEED_BADGE_NEW}
                 </span>
               )}
