@@ -3,7 +3,12 @@ name: Collect Food Events
 on:
   schedule:
     - cron: '0 */6 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      since:
+        description: 'Scan emails since date (YYYY-MM-DD). Leave empty for auto.'
+        required: false
+        default: ''
 
 jobs:
   collect:
@@ -17,7 +22,13 @@ jobs:
       - name: Install dependencies
         run: cd scripts && npm ci
       - name: Run collection
-        run: cd scripts && npx tsx collect.ts
+        run: |
+          cd scripts
+          if [ -n "${{ inputs.since }}" ]; then
+            npx tsx collect.ts --since=${{ inputs.since }}
+          else
+            npx tsx collect.ts
+          fi
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
