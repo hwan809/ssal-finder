@@ -1,12 +1,12 @@
 export const S = {
   // 앱 전역
-  APP_NAME: "카이스트 쌀먹파인더",
+  APP_NAME: "카이스트 쌀먹찾기",
   APP_DESC: "KAIST에서 밥 주는 행사만 모아보는 서비스",
-  APP_SHORT: "쌀먹파인더",
+  APP_SHORT: "쌀먹찾기",
   CALENDAR_PREFIX: "[쌀먹]",
 
   // 랜딩
-  LANDING_TITLE: "카이스트 쌀먹파인더",
+  LANDING_TITLE: "카이스트 쌀먹찾기",
   LANDING_SUBTITLE_1: "돈이 없는 KAIST 학부생들은 공짜 밥이 필요합니다.",
   LANDING_CTA: "행사 보러가기 →",
   LANDING_FOOTER: "KAIST portal + dooray 메일에서 수집. (6시간마다 업데이트합니다)",
