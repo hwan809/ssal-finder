@@ -1,5 +1,5 @@
 import type { UpdateLog, FoodType } from "@/lib/types";
-import { FOOD_COLORS } from "@/lib/colors";
+import { FOOD_ICONS } from "@/lib/colors";
 import { timeAgo } from "@/lib/calendar-utils";
 import { S } from "@/lib/strings";
 
@@ -18,16 +18,16 @@ export function FeedTimeline({ logs }: FeedTimelineProps) {
     <div className="divide-y divide-stone-200 dark:divide-stone-800">
       {logs.map((log) => {
         const foodType = log.event?.food_type as FoodType | undefined;
-        const c = foodType ? FOOD_COLORS[foodType] : null;
+        const icon = foodType ? FOOD_ICONS[foodType] : null;
         return (
           <div key={log.id} className="flex gap-3 py-3 text-sm">
             <span className="text-stone-400 dark:text-stone-600 tabular-nums text-xs w-14 shrink-0 pt-0.5">
               {timeAgo(log.created_at)}
             </span>
             <div className="text-stone-500 dark:text-stone-400">
-              {c && (
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mr-1 ${c.bg} ${c.text}`}>
-                  <span className="emoji">{c.icon}</span> {foodType}
+              {icon && (
+                <span className="mr-1">
+                  <span className="emoji">{icon}</span> {foodType}
                 </span>
               )}
               <strong className="text-stone-900 dark:text-stone-100 font-semibold">

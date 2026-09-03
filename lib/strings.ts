@@ -103,6 +103,12 @@ export const S = {
   ATTEND_NICKNAME_PLACEHOLDER: "익명의 카이스트인",
   ATTEND_LIST_TITLE: "참석자",
 
+  // 추천
+  REC_TODAY_MEAL: (food: string) => `오늘 점심,\n${food} 어때요?`,
+  REC_TOMORROW_MEAL: (food: string) => `내일 점심,\n${food} 어때요?`,
+  REC_EMPTY_WEEK: "아 쌀먹 좀 하자...",
+  REC_NEXT_EVENT: (dateStr: string) => `다음 밥은 ${dateStr}!`,
+
   // 음식 타입
   FOOD_TYPES: {
     버거: "버거",
