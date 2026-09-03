@@ -7,7 +7,7 @@ import type { Event, FoodType } from "@/lib/types";
 import { MOCK_EVENTS } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { FOOD_ICONS } from "@/lib/colors";
-import { formatTime } from "@/lib/calendar-utils";
+import { formatTime, shortFoodName } from "@/lib/calendar-utils";
 import { getProfile } from "@/lib/auto-register";
 import { S } from "@/lib/strings";
 import { Header } from "@/components/layout/header";
@@ -180,7 +180,7 @@ function EventsContent() {
                   <span className="emoji text-[16px] shrink-0">{FOOD_ICONS[event.food_type]}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-[14px] font-bold" style={{ letterSpacing: "-0.01em" }}>
-                      {event.food_note || event.food_type}
+                      {shortFoodName(event.food_note, event.food_type)}
                     </div>
                     <div className="text-[12px] mt-0.5" style={{ color: "var(--g5)" }}>
                       {event.title} · {event.location || ""}
@@ -219,7 +219,7 @@ function EventsContent() {
             >
               <span className="emoji text-[24px]">{FOOD_ICONS[event.food_type]}</span>
               <div className="flex-1">
-                <div className="text-[14px] font-bold">{event.food_note || event.food_type}</div>
+                <div className="text-[14px] font-bold">{shortFoodName(event.food_note, event.food_type)}</div>
                 <div className="text-[12px]" style={{ color: "var(--g5)" }}>
                   {formatTime(event.start_at)} · {event.location || ""}
                 </div>

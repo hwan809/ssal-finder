@@ -61,3 +61,8 @@ export function getTimeSlot(iso: string): "morning" | "lunch" | "dinner" {
   if (h < 17) return "lunch";
   return "dinner";
 }
+
+export function shortFoodName(foodNote: string | null, foodType: string): string {
+  if (foodNote && foodNote.length <= 8) return foodNote;
+  return foodType;
+}

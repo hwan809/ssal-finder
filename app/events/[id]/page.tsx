@@ -6,7 +6,7 @@ import type { Event } from "@/lib/types";
 import { MOCK_EVENTS } from "@/lib/mock-data";
 import { supabase } from "@/lib/supabase";
 import { FOOD_ICONS } from "@/lib/colors";
-import { formatDateLong, formatTime, googleCalendarUrl } from "@/lib/calendar-utils";
+import { formatDateLong, formatTime, googleCalendarUrl, shortFoodName } from "@/lib/calendar-utils";
 import { AutoRegisterButton, type AutoRegisterButtonHandle } from "@/components/events/auto-register-button";
 import { AttendeeSection, type AttendeeSectionHandle } from "@/components/events/attendee-section";
 import { TossProfileFlow } from "@/components/ui/toss-profile-flow";
@@ -83,7 +83,7 @@ function EventDetailContent({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex items-center gap-1.5 mb-2">
           <span className="emoji text-[15px]">{FOOD_ICONS[event.food_type]}</span>
           <span className="text-[13px] font-bold" style={{ color: "var(--g5)" }}>
-            {event.food_note || event.food_type}
+            {shortFoodName(event.food_note, event.food_type)}
           </span>
         </div>
 
