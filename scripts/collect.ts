@@ -96,11 +96,16 @@ async function main() {
   // -----------------------------------------------------------------------
   // Step 2.5: Fetch bodies for filtered emails
   // -----------------------------------------------------------------------
-  console.log("\n--- Step 2.5: Fetching bodies ---");
-  const uidsToFetch = filtered.map((e) => e.uid);
-  const bodies = await fetchBodies(uidsToFetch);
-  for (const e of filtered) {
-    if (bodies[e.uid]) e.body = bodies[e.uid];
+  // Step 2.5: Only fetch bodies if they're missing (new IMAP fetcher includes them)
+  const needBodies = filtered.filter((e) => !e.body || e.body.length < 10);
+  if (needBodies.length > 0) {
+    console.log(`\n--- Step 2.5: Fetching ${needBodies.length} missing bodies ---`);
+    const bodies = await fetchBodies(needBodies.map((e) => e.uid));
+    for (const e of needBodies) {
+      if (bodies[e.uid]) e.body = bodies[e.uid];
+    }
+  } else {
+    console.log("\n--- Step 2.5: All bodies already present, skipping ---");
   }
 
   // -----------------------------------------------------------------------
