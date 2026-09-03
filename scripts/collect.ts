@@ -27,7 +27,8 @@ import { fetchEmailsSince, type FetchedEmail } from "./imap-fetcher";
 import { shouldProcess, maskForLLM } from "./privacy-filter";
 import { classifyEmails, type ClassifiedEvent } from "./llm-classifier";
 import { parseAndMapForm, extractFormId, type FormMapping } from "./form-parser";
-import { upsertEvent, getLastCollectionTime } from "./db-upserter";
+import { upsertEvent, getLastCollectionTime, saveLLMUsageLogs } from "./db-upserter";
+import { usageLogs, getTotalUsage } from "./llm-classifier";
 
 async function main() {
   const startTime = Date.now();
@@ -195,6 +196,11 @@ async function main() {
   // -----------------------------------------------------------------------
   // Summary
   // -----------------------------------------------------------------------
+  // Save LLM usage logs to DB
+  console.log("\n--- Step 6: Saving LLM usage logs ---");
+  await saveLLMUsageLogs(usageLogs);
+  const totalUsage = getTotalUsage();
+
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log("\n=== Pipeline complete ===");
   console.log(`  Emails fetched:  ${emails.length}`);
@@ -204,6 +210,9 @@ async function main() {
   console.log(`  DB updated:      ${updated}`);
   console.log(`  DB skipped:      ${skipped}`);
   console.log(`  Forms parsed:    ${formCache.size}`);
+  console.log(`  LLM calls:       ${totalUsage.calls}`);
+  console.log(`  LLM tokens:      ${totalUsage.input_tokens} in / ${totalUsage.output_tokens} out`);
+  console.log(`  LLM cost:        $${totalUsage.cost_usd.toFixed(4)}`);
   console.log(`  Elapsed:         ${elapsed}s`);
 }
 

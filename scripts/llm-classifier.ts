@@ -1,9 +1,6 @@
 /**
- * LLM classifier — sends masked email content to Claude Haiku for
- * food-event classification.
- *
- * Environment variables:
- *   ANTHROPIC_API_KEY – API key for Claude
+ * LLM classifier - sends masked email content to Claude Haiku for
+ * food-event classification. Tracks token usage and cost.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -40,63 +37,79 @@ export interface ClassifiedEvent {
   description?: string;
 }
 
+export interface LLMUsage {
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  prompt_preview: string;
+  response_preview: string;
+  purpose: string;
+}
+
+// Haiku pricing (per token)
+const HAIKU_INPUT_PRICE = 0.80 / 1_000_000;
+const HAIKU_OUTPUT_PRICE = 4.0 / 1_000_000;
+const MODEL = "claude-haiku-4-5-20251001";
+
+// Accumulated usage across all calls in this run
+export const usageLogs: LLMUsage[] = [];
+
 let _client: Anthropic | null = null;
 
 function getClient(): Anthropic {
   if (!_client) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error("ANTHROPIC_API_KEY is not set.");
-    }
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set.");
     _client = new Anthropic({ apiKey });
   }
   return _client;
 }
 
-/**
- * Classify a single email. Input should already be masked for PII.
- * Returns the parsed classification result.
- */
 export async function classifyEmail(
   subject: string,
   body: string,
 ): Promise<ClassifiedEvent> {
   const client = getClient();
-
   const userMessage = `제목: ${subject}\n\n본문:\n${truncate(body, 8000)}`;
 
   const response = await client.messages.create({
-    model: "claude-haiku-4-20250414",
+    model: MODEL,
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userMessage }],
   });
 
-  // Extract text from the response
   const text =
     response.content
       .filter((block) => block.type === "text")
-      .map((block) => {
-        if (block.type === "text") return block.text;
-        return "";
-      })
+      .map((block) => (block.type === "text" ? block.text : ""))
       .join("") || "";
 
-  // Parse JSON from the response — handle markdown code fences
-  const jsonStr = extractJson(text);
+  const inputTokens = response.usage?.input_tokens || 0;
+  const outputTokens = response.usage?.output_tokens || 0;
+  const cost =
+    inputTokens * HAIKU_INPUT_PRICE + outputTokens * HAIKU_OUTPUT_PRICE;
 
+  usageLogs.push({
+    model: MODEL,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    cost_usd: cost,
+    prompt_preview: userMessage.slice(0, 200),
+    response_preview: text.slice(0, 500),
+    purpose: "classify_email",
+  });
+
+  const jsonStr = extractJson(text);
   try {
-    const parsed = JSON.parse(jsonStr) as ClassifiedEvent;
-    return parsed;
-  } catch (err) {
-    console.warn("[llm] Failed to parse LLM response as JSON:", text);
+    return JSON.parse(jsonStr) as ClassifiedEvent;
+  } catch {
+    console.warn("[llm] Failed to parse response:", text.slice(0, 200));
     return { is_food_event: false };
   }
 }
 
-/**
- * Classify multiple emails concurrently with a concurrency limit.
- */
 export async function classifyEmails(
   items: Array<{ subject: string; body: string }>,
   concurrency: number = 5,
@@ -126,9 +139,22 @@ export async function classifyEmails(
   return results;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+export function getTotalUsage(): {
+  calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+} {
+  return usageLogs.reduce(
+    (acc, u) => ({
+      calls: acc.calls + 1,
+      input_tokens: acc.input_tokens + u.input_tokens,
+      output_tokens: acc.output_tokens + u.output_tokens,
+      cost_usd: acc.cost_usd + u.cost_usd,
+    }),
+    { calls: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0 },
+  );
+}
 
 function truncate(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
@@ -136,13 +162,9 @@ function truncate(text: string, maxLen: number): string {
 }
 
 function extractJson(text: string): string {
-  // Try to find JSON inside markdown code fences
   const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   if (fenceMatch) return fenceMatch[1].trim();
-
-  // Try to find a raw JSON object
   const braceMatch = text.match(/\{[\s\S]*\}/);
   if (braceMatch) return braceMatch[0];
-
   return text.trim();
 }

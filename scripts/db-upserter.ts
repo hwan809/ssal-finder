@@ -11,7 +11,7 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
-import type { ClassifiedEvent } from "./llm-classifier";
+import type { ClassifiedEvent, LLMUsage } from "./llm-classifier";
 import type { FormMapping } from "./form-parser";
 
 export interface UpsertResult {
@@ -201,6 +201,31 @@ function buildDiff(
   }
 
   return diff;
+}
+
+/**
+ * Save LLM usage logs to the llm_logs table.
+ */
+export async function saveLLMUsageLogs(logs: LLMUsage[]): Promise<void> {
+  if (logs.length === 0) return;
+  const supabase = getSupabase();
+
+  const rows = logs.map((l) => ({
+    model: l.model,
+    input_tokens: l.input_tokens,
+    output_tokens: l.output_tokens,
+    cost_usd: l.cost_usd,
+    prompt_preview: l.prompt_preview,
+    response_preview: l.response_preview,
+    purpose: l.purpose,
+  }));
+
+  const { error } = await supabase.from("llm_logs").insert(rows);
+  if (error) {
+    console.warn("[db] Failed to save LLM logs:", error.message);
+  } else {
+    console.log(`[db] Saved ${rows.length} LLM usage log(s)`);
+  }
 }
 
 /**
