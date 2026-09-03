@@ -51,6 +51,8 @@ export async function fetchEmailsSince(
     secure: true,
     auth: { user, pass },
     logger: false,
+    socketTimeout: 120_000,
+    greetingTimeout: 30_000,
   });
 
   const emails: FetchedEmail[] = [];
@@ -76,12 +78,14 @@ export async function fetchEmailsSince(
         return [];
       }
 
-      console.log(`[imap] Found ${uids.length} email(s) since ${sinceDate.toISOString()}`);
+      // Limit to most recent 100 to avoid timeout
+      const maxEmails = 100;
+      const trimmedUids = uids.slice(-maxEmails);
+      console.log(`[imap] Found ${uids.length} email(s) since ${sinceDate.toISOString()}, fetching ${trimmedUids.length}`);
 
-      // Fetch in batches of 50 to avoid memory issues
-      const batchSize = 50;
-      for (let i = 0; i < uids.length; i += batchSize) {
-        const batch = uids.slice(i, i + batchSize);
+      const batchSize = 20;
+      for (let i = 0; i < trimmedUids.length; i += batchSize) {
+        const batch = trimmedUids.slice(i, i + batchSize);
         const uidRange = batch.join(",");
 
         for await (const message of client.fetch(uidRange, {
