@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Attendee } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { getProfile } from "@/lib/auto-register";
 import { S } from "@/lib/strings";
-
-const LS_KEY = "ssal-attendee-nickname";
 
 interface AttendeeSectionProps {
   eventId: string;
@@ -13,14 +12,8 @@ interface AttendeeSectionProps {
 
 export function AttendeeSection({ eventId }: AttendeeSectionProps) {
   const [attendees, setAttendees] = useState<Attendee[]>([]);
-  const [showInput, setShowInput] = useState(false);
-  const [nickname, setNickname] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
-
-  useEffect(() => {
-    const saved = localStorage.getItem(LS_KEY);
-    if (saved) setNickname(saved);
-  }, []);
+  const [alreadyGoing, setAlreadyGoing] = useState(false);
 
   const fetchAttendees = useCallback(async () => {
     if (supabase) {
@@ -29,7 +22,13 @@ export function AttendeeSection({ eventId }: AttendeeSectionProps) {
         .select("*")
         .eq("event_id", eventId)
         .order("created_at", { ascending: true });
-      if (data) setAttendees(data);
+      if (data) {
+        setAttendees(data);
+        const profile = getProfile();
+        if (profile?.name && data.some((a) => a.nickname === profile.name)) {
+          setAlreadyGoing(true);
+        }
+      }
     }
   }, [eventId]);
 
@@ -37,40 +36,29 @@ export function AttendeeSection({ eventId }: AttendeeSectionProps) {
     fetchAttendees();
   }, [fetchAttendees]);
 
-  const handleSubmit = async () => {
-    const trimmed = nickname.trim();
-    if (!trimmed) return;
+  const handleGoing = async () => {
+    const profile = getProfile();
+    const nickname = profile?.name;
+    if (!nickname) {
+      alert(S.AUTO_REGISTER_NO_PROFILE);
+      return;
+    }
 
     setStatus("loading");
-    localStorage.setItem(LS_KEY, trimmed);
 
     if (supabase) {
-      const { error } = await supabase
+      await supabase
         .from("attendees")
-        .insert({ event_id: eventId, nickname: trimmed });
-
-      if (error) {
-        // unique constraint violation means already attending
-        setStatus("done");
-        setShowInput(false);
-        setTimeout(() => setStatus("idle"), 2000);
-        return;
-      }
+        .insert({ event_id: eventId, nickname });
     } else {
-      // Mock response when supabase is not configured
       setAttendees((prev) => [
         ...prev,
-        {
-          id: crypto.randomUUID(),
-          event_id: eventId,
-          nickname: trimmed,
-          created_at: new Date().toISOString(),
-        },
+        { id: crypto.randomUUID(), event_id: eventId, nickname, created_at: new Date().toISOString() },
       ]);
     }
 
     setStatus("done");
-    setShowInput(false);
+    setAlreadyGoing(true);
     await fetchAttendees();
     setTimeout(() => setStatus("idle"), 2000);
   };
@@ -99,32 +87,21 @@ export function AttendeeSection({ eventId }: AttendeeSectionProps) {
         </div>
       )}
 
-      {showInput ? (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder={S.ATTEND_NICKNAME_PLACEHOLDER}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-            }}
-            className="flex-1 px-3 py-2 text-sm rounded-lg bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={status === "loading" || !nickname.trim()}
-            className="px-4 py-2 text-sm font-bold rounded-lg bg-orange-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {status === "loading" ? "..." : S.ATTEND_GOING}
-          </button>
+      {alreadyGoing ? (
+        <div className="text-center text-xs text-stone-400 py-2">
+          ✓ {S.ATTEND_GOING_DONE}
         </div>
       ) : (
         <button
-          onClick={() => setShowInput(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors"
+          onClick={handleGoing}
+          disabled={status === "loading"}
+          className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+            status === "loading"
+              ? "bg-stone-300 dark:bg-stone-700 text-stone-500 cursor-wait"
+              : "border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-800"
+          }`}
         >
-          {status === "done" ? `✓ ${S.ATTEND_GOING_DONE}` : `🙋 ${S.ATTEND_GOING}`}
+          🙋 {S.ATTEND_GOING}
         </button>
       )}
     </div>
