@@ -26,8 +26,8 @@ export default function EventsPage() {
   );
 }
 
-function GoingButton({ eventId }: { eventId: string }) {
-  const [done, setDone] = useState(false);
+function GoingButton({ eventId, alreadyGoing }: { eventId: string; alreadyGoing: boolean }) {
+  const [done, setDone] = useState(alreadyGoing);
   const [showProfile, setShowProfile] = useState(false);
   const toast = useToast();
 
@@ -83,24 +83,37 @@ function GoingButton({ eventId }: { eventId: string }) {
 }
 
 function EventsContent() {
-  const [events, setEvents] = useState<Event[]>(MOCK_EVENTS);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FoodType | null>(null);
   const [sheetDate, setSheetDate] = useState<string | null>(null);
+  const [myAttendances, setMyAttendances] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    async function fetchEvents() {
-      if (!supabase) {
-        setEvents(MOCK_EVENTS);
-        return;
+    async function fetchData() {
+      let evts: Event[] = MOCK_EVENTS;
+      if (supabase) {
+        const { data } = await supabase
+          .from("events")
+          .select("*")
+          .gte("start_at", new Date(Date.now() - 7 * 86400000).toISOString())
+          .order("start_at", { ascending: true });
+        if (data?.length) evts = data;
       }
-      const { data } = await supabase
-        .from("events")
-        .select("*")
-        .gte("start_at", new Date(Date.now() - 7 * 86400000).toISOString())
-        .order("start_at", { ascending: true });
-      setEvents(data?.length ? data : MOCK_EVENTS);
+      setEvents(evts);
+      setLoading(false);
+
+      // Check which events I already attend
+      const profile = getProfile();
+      if (profile?.name && supabase) {
+        const { data: att } = await supabase
+          .from("attendees")
+          .select("event_id")
+          .eq("nickname", profile.name);
+        if (att) setMyAttendances(new Set(att.map((a) => a.event_id)));
+      }
     }
-    fetchEvents();
+    fetchData();
   }, []);
 
   const filtered = events.filter((e) => !filter || e.food_type === filter);
@@ -143,7 +156,7 @@ function EventsContent() {
         </Link>
       </Header>
 
-      <Recommendation events={filtered} />
+      {!loading && <Recommendation events={filtered} />}
 
       <div style={{ height: 6, background: "var(--g9)" }} />
 
@@ -190,7 +203,7 @@ function EventsContent() {
                     </div>
                   </div>
                 </Link>
-                <GoingButton eventId={event.id} />
+                <GoingButton eventId={event.id} alreadyGoing={myAttendances.has(event.id)} />
               </div>
             ))}
           </div>

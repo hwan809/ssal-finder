@@ -13,9 +13,9 @@ interface TossProfileFlowProps {
 interface Step {
   key: keyof UserProfile;
   question: string;
-  type: "text" | "email" | "chips";
+  type: "text" | "email" | "tel" | "chips";
   placeholder?: string;
-  inputMode?: "numeric" | "email" | "text";
+  inputMode?: "numeric" | "email" | "tel" | "text";
   options?: string[];
 }
 
@@ -24,10 +24,11 @@ const STEPS: Step[] = [
   { key: "student_id", question: "학번을\n알려주세요", type: "text", placeholder: "20250000", inputMode: "numeric" },
   { key: "department", question: "어느 학과\n소속이세요?", type: "chips", options: ["전산학부", "전기전자", "기계공학", "생명과학", "물리학", "수리과학", "화학", "기타"] },
   { key: "email", question: "이메일 주소를\n입력해주세요", type: "email", placeholder: "hong@kaist.ac.kr" },
+  { key: "phone", question: "전화번호를\n알려주세요", type: "tel", placeholder: "010-0000-0000", inputMode: "tel" },
 ];
 
 const LABELS: Record<string, string> = {
-  name: "이름", student_id: "학번", department: "학과", email: "이메일",
+  name: "이름", student_id: "학번", department: "학과", email: "이메일", phone: "전화번호",
 };
 
 export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowProps) {
@@ -46,7 +47,9 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
   }, [open]);
 
   useEffect(() => {
-    if (open && inputRef.current) inputRef.current.focus();
+    if (open && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
   }, [open, step]);
 
   if (!open) return null;
@@ -65,7 +68,7 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
         student_id: newDone[1],
         department: newDone[2],
         email: newDone[3],
-        phone: "",
+        phone: newDone[4] || "",
       };
       saveProfile(profile);
       toast("프로필이 기기에 저장되었어요");
@@ -86,24 +89,37 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col max-w-[480px] mx-auto overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div
+      className="fixed inset-0 z-[80] flex flex-col max-w-[480px] mx-auto"
+      style={{ background: "var(--bg)", overflow: "hidden", height: "100dvh" }}
+    >
+      {/* Back button */}
       <div className="px-5 py-4 shrink-0">
-        <button onClick={goBack} className="text-[18px]" style={{ color: "var(--fg)" }}>←</button>
+        <button onClick={goBack} className="text-[18px]" style={{ color: "var(--fg)" }}>
+          ←
+        </button>
       </div>
 
-      <div className="px-6 shrink-0">
-        {doneValues.map((val, i) => (
-          <div key={i} className="pb-2 opacity-0 animate-[fadeIn_.3s_ease_forwards]">
-            <span className="text-[12px] font-semibold" style={{ color: "var(--g5)" }}>
-              {LABELS[STEPS[i].key]}
-            </span>
-            <span className="text-[13px] font-bold ml-2">{val}</span>
-          </div>
-        ))}
-      </div>
+      {/* Done fields - compact at top */}
+      {doneValues.length > 0 && (
+        <div className="px-6 pb-2 shrink-0 flex flex-wrap gap-x-4 gap-y-1">
+          {doneValues.map((val, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold" style={{ color: "var(--g5)" }}>
+                {LABELS[STEPS[i].key]}
+              </span>
+              <span className="text-[12px] font-bold">{val}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div className="flex-1 px-6 flex flex-col justify-center min-h-0">
-        <div className="text-[22px] font-black mb-6 whitespace-pre-line" style={{ letterSpacing: "-0.04em", lineHeight: 1.35 }}>
+      {/* Question + input - always vertically centered */}
+      <div className="flex-1 px-6 flex flex-col justify-center">
+        <div
+          className="text-[22px] font-black mb-6 whitespace-pre-line"
+          style={{ letterSpacing: "-0.04em", lineHeight: 1.35 }}
+        >
           {s.question}
         </div>
 
@@ -112,7 +128,7 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
             {s.options!.map((opt) => (
               <button
                 key={opt}
-                onClick={() => setCurValue(opt)}
+                onClick={() => { setCurValue(opt); }}
                 className="px-5 py-2.5 text-[15px] font-semibold transition-all active:scale-[0.96]"
                 style={{
                   border: `1.5px solid ${curValue === opt ? "var(--fg)" : "var(--g7)"}`,
@@ -146,6 +162,7 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
         )}
       </div>
 
+      {/* Next button */}
       <div className="px-6 pb-9 pt-4 shrink-0">
         <button
           onClick={goNext}
@@ -161,8 +178,6 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
           {isLast ? "완료" : "다음"}
         </button>
       </div>
-
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>
   );
 }

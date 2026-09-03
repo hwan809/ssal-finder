@@ -22,12 +22,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={show}>
       {children}
       <div
-        className="fixed bottom-20 left-1/2 -translate-x-1/2 px-5 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none z-[100]"
+        className="fixed left-1/2 px-5 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-all duration-300 pointer-events-none z-[100]"
         style={{
+          top: "50%",
           background: "var(--fg)",
           color: "var(--bg)",
           opacity: visible ? 1 : 0,
-          transform: `translateX(-50%) translateY(${visible ? 0 : 20}px)`,
+          transform: `translate(-50%, -50%) scale(${visible ? 1 : 0.95})`,
+          borderRadius: 8,
         }}
       >
         {msg}
