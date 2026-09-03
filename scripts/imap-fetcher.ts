@@ -54,39 +54,7 @@ if not uids:
 
 uids = uids[-max_emails:]
 
-# --- Pass 1: batch header fetch (fast) ---
-uid_set = b",".join(uids)
-typ, data = conn.uid("fetch", uid_set, "(FLAGS BODY.PEEK[HEADER.FIELDS (FROM TO SUBJECT DATE)])")
-
-header_map = {}
-for item in data:
-    if not isinstance(item, tuple) or len(item) < 2:
-        continue
-    meta = item[0].decode("utf-8", errors="replace")
-    m_uid = re.search(r"UID (\\d+)", meta)
-    if not m_uid:
-        continue
-    uid_val = int(m_uid.group(1))
-    headers = email.message_from_bytes(item[1])
-    def hdr(n):
-        raw = headers.get(n, "")
-        if not raw: return ""
-        try: return str(make_header(decode_header(raw))).strip()
-        except: return str(raw).strip()
-    to_raw = hdr("To")
-    to_list = [a.strip() for a in to_raw.split(",") if a.strip()]
-    header_map[uid_val] = {
-        "uid": uid_val,
-        "subject": hdr("Subject"),
-        "from": hdr("From"),
-        "to": to_list,
-        "date": hdr("Date"),
-        "body": "",
-    }
-
-sys.stderr.write(f"[imap] Headers fetched: {len(header_map)}\\n")
-
-# --- Helpers for body decoding ---
+# --- Helper: decode a MIME part's transfer encoding + charset ---
 def decode_part(raw_bytes, mime_bytes):
     encoding = "7bit"
     charset = "utf-8"
@@ -115,56 +83,59 @@ def decode_part(raw_bytes, mime_bytes):
         text = re.sub(r"\\s+", " ", text).strip()
     return text.strip()[:10000]
 
-# --- Pass 2: batch body fetch with BODY.PEEK[1] ---
-total = len(uids)
-batch_size = 15
+# --- Single batch fetch: headers + first MIME part ---
+uid_set = b",".join(uids)
+typ, data = conn.uid("fetch", uid_set,
+    "(FLAGS BODY.PEEK[HEADER.FIELDS (FROM TO SUBJECT DATE)] BODY.PEEK[1] BODY.PEEK[1.MIME])")
 
-for bi in range(0, total, batch_size):
-    batch = uids[bi:bi+batch_size]
-    batch_set = b",".join(batch)
-    lo, hi = bi + 1, min(bi + batch_size, total)
-    sys.stderr.write(f"[imap] Fetching bodies {lo}-{hi}/{total}\\n")
+header_map = {}
+uid_headers = {}
+uid_bodies = {}
+uid_mimes = {}
 
+for item in data:
+    if not isinstance(item, tuple) or len(item) < 2:
+        continue
+    meta = item[0].decode("utf-8", errors="replace")
+    m_uid = re.search(r"UID (\\d+)", meta)
+    if not m_uid:
+        continue
+    uid_val = int(m_uid.group(1))
+    if "BODY[HEADER.FIELDS" in meta:
+        uid_headers[uid_val] = item[1]
+    elif "BODY[1.MIME]" in meta:
+        uid_mimes[uid_val] = item[1]
+    elif "BODY[1]" in meta:
+        uid_bodies[uid_val] = item[1]
+
+for uid_val, raw_hdrs in uid_headers.items():
+    headers = email.message_from_bytes(raw_hdrs)
+    def hdr(n):
+        raw = headers.get(n, "")
+        if not raw: return ""
+        try: return str(make_header(decode_header(raw))).strip()
+        except: return str(raw).strip()
+    to_raw = hdr("To")
+    to_list = [a.strip() for a in to_raw.split(",") if a.strip()]
+    body_text = ""
+    if uid_val in uid_bodies:
+        body_text = decode_part(uid_bodies[uid_val], uid_mimes.get(uid_val))
+    header_map[uid_val] = {
+        "uid": uid_val,
+        "subject": hdr("Subject"),
+        "from": hdr("From"),
+        "to": to_list,
+        "date": hdr("Date"),
+        "body": body_text,
+    }
+
+sys.stderr.write(f"[imap] Fetched headers+bodies: {len(header_map)}\\n")
+
+# --- Fallback: UIDs without body (non-multipart messages) - batch BODY.PEEK[TEXT] ---
+missing = [u for u in uids if int(u.decode()) in header_map and not header_map[int(u.decode())].get("body")]
+if missing:
+    sys.stderr.write(f"[imap] Fallback TEXT fetch for {len(missing)} UID(s)\\n")
     for attempt in range(2):
-        try:
-            typ, data = conn.uid("fetch", batch_set, "(BODY.PEEK[1] BODY.PEEK[1.MIME])")
-            if typ != "OK":
-                raise Exception(f"FETCH returned {typ}")
-
-            uid_bodies = {}
-            uid_mimes = {}
-            for item in data:
-                if not isinstance(item, tuple) or len(item) < 2:
-                    continue
-                meta = item[0].decode("utf-8", errors="replace")
-                m = re.search(r"UID (\\d+)", meta)
-                if not m:
-                    continue
-                u = int(m.group(1))
-                if "BODY[1.MIME]" in meta:
-                    uid_mimes[u] = item[1]
-                elif "BODY[1]" in meta:
-                    uid_bodies[u] = item[1]
-
-            for u, body in uid_bodies.items():
-                if u in header_map:
-                    header_map[u]["body"] = decode_part(body, uid_mimes.get(u))
-            break
-        except Exception as e:
-            if attempt == 0:
-                sys.stderr.write(f"[imap] Batch {lo}-{hi} failed (attempt 1): {e}, retrying in 3s...\\n")
-                time.sleep(3)
-                try:
-                    conn.noop()
-                except:
-                    conn = connect()
-            else:
-                sys.stderr.write(f"[imap] Batch {lo}-{hi} failed after retry: {e}\\n")
-
-    # Fallback: UIDs that got no body (non-multipart messages) - try BODY.PEEK[TEXT]
-    missing = [u for u in batch if int(u.decode()) in header_map and not header_map[int(u.decode())].get("body")]
-    if missing:
-        sys.stderr.write(f"[imap] Fallback TEXT fetch for {len(missing)} UID(s)\\n")
         try:
             missing_set = b",".join(missing)
             typ, data = conn.uid("fetch", missing_set, "(BODY.PEEK[TEXT])")
@@ -186,8 +157,17 @@ for bi in range(0, total, batch_size):
                             text = text.replace("&nbsp;", " ")
                             text = re.sub(r"\\s+", " ", text).strip()
                         header_map[u]["body"] = text.strip()[:10000]
+            break
         except Exception as e:
-            sys.stderr.write(f"[imap] Fallback TEXT fetch failed: {e}\\n")
+            if attempt == 0:
+                sys.stderr.write(f"[imap] Fallback failed (attempt 1): {e}, retrying in 3s...\\n")
+                time.sleep(3)
+                try:
+                    conn.noop()
+                except:
+                    conn = connect()
+            else:
+                sys.stderr.write(f"[imap] Fallback failed after retry: {e}\\n")
 
 conn.logout()
 results = [header_map[int(u.decode())] for u in uids if int(u.decode()) in header_map]
