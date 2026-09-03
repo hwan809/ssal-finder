@@ -73,6 +73,12 @@ export default function EventsPage() {
               <span className="hidden sm:inline">+ {S.SUBMIT_TITLE}</span>
             </Link>
             <Link
+              href="/profile"
+              className="shrink-0 w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-800 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
+            >
+              👤
+            </Link>
+            <Link
               href="/feed"
               className="shrink-0 relative w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-800 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
             >
