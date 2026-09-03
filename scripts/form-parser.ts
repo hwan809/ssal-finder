@@ -38,11 +38,34 @@ export function extractFormId(url: string): string | null {
 }
 
 /**
+ * Resolve a short URL (e.g. forms.gle/xxx) to the full Google Forms URL.
+ * Uses redirect: "manual" to read the Location header without following
+ * the entire redirect chain (avoids closed-form redirects).
+ */
+async function resolveShortUrl(url: string): Promise<string> {
+  const res = await fetch(url, { redirect: "manual" });
+  const location = res.headers.get("location");
+  if (location && location.includes("docs.google.com/forms")) {
+    return location;
+  }
+  // If first hop didn't land on Google Forms, return as-is
+  return url;
+}
+
+/**
  * Fetch a Google Form's HTML and extract entry IDs and labels.
  */
 export async function extractFormFields(formUrl: string): Promise<FormField[]> {
-  // Normalize to the viewform URL
+  // Resolve short URLs (forms.gle) to their full Google Forms URL
   let url = formUrl;
+  if (
+    url.includes("forms.gle/") ||
+    (!url.includes("docs.google.com/forms") && !url.includes("/viewform"))
+  ) {
+    url = await resolveShortUrl(url);
+  }
+
+  // Normalize to the viewform URL
   if (!url.includes("/viewform")) {
     const formId = extractFormId(url);
     if (formId) {
@@ -50,13 +73,59 @@ export async function extractFormFields(formUrl: string): Promise<FormField[]> {
     }
   }
 
+  // Strip any query params and ensure /viewform ending
+  if (url.includes("/viewform?")) {
+    url = url.replace(/\?.*$/, "");
+  }
+
+  // Fetch the form HTML; use redirect: "manual" so we can detect
+  // closed-form redirects and still attempt to extract the viewform page.
   const response = await fetch(url, {
+    redirect: "manual",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
       "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
     },
   });
+
+  // If the form redirects to /closedform, it's closed -- try to fetch the
+  // closedform page (it sometimes still has FB_PUBLIC_LOAD_DATA_), but also
+  // note the form is closed.
+  if (response.status >= 300 && response.status < 400) {
+    const location = response.headers.get("location") || "";
+    if (location.includes("/closedform")) {
+      // Fetch the closedform page
+      const closedRes = await fetch(location, {
+        headers: { "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8" },
+      });
+      if (!closedRes.ok) {
+        throw new Error(
+          `Form is closed and closedform page returned ${closedRes.status}`,
+        );
+      }
+      const closedHtml = await closedRes.text();
+      const fields = parseFormHtml(closedHtml);
+      if (fields.length > 0) return fields;
+      // closedform pages often lack field data -- return empty with a warning
+      console.warn(
+        `[form-parser] Form is closed (redirected to /closedform), no field data available.`,
+      );
+      return [];
+    }
+    // Other redirect -- follow it
+    const redirectUrl = location.startsWith("http")
+      ? location
+      : new URL(location, url).href;
+    const redirectRes = await fetch(redirectUrl, {
+      headers: { "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8" },
+    });
+    if (!redirectRes.ok) {
+      throw new Error(
+        `Failed to fetch form after redirect: ${redirectRes.status} ${redirectRes.statusText}`,
+      );
+    }
+    const html = await redirectRes.text();
+    return parseFormHtml(html);
+  }
 
   if (!response.ok) {
     throw new Error(

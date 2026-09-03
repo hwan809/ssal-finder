@@ -23,7 +23,7 @@
  *   SUPABASE_SERVICE_KEY – Supabase service_role key
  */
 
-import { fetchEmailsSince, type FetchedEmail } from "./imap-fetcher";
+import { fetchEmailsSince, fetchBodies, type FetchedEmail } from "./imap-fetcher";
 import { shouldProcess, maskForLLM } from "./privacy-filter";
 import { classifyEmails, type ClassifiedEvent } from "./llm-classifier";
 import { parseAndMapForm, extractFormId, type FormMapping } from "./form-parser";
@@ -91,6 +91,16 @@ async function main() {
   if (filtered.length === 0) {
     console.log("No emails passed privacy filter. Exiting.");
     return;
+  }
+
+  // -----------------------------------------------------------------------
+  // Step 2.5: Fetch bodies for filtered emails
+  // -----------------------------------------------------------------------
+  console.log("\n--- Step 2.5: Fetching bodies ---");
+  const uidsToFetch = filtered.map((e) => e.uid);
+  const bodies = await fetchBodies(uidsToFetch);
+  for (const e of filtered) {
+    if (bodies[e.uid]) e.body = bodies[e.uid];
   }
 
   // -----------------------------------------------------------------------

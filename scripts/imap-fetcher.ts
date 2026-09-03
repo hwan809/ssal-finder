@@ -1,20 +1,13 @@
 /**
- * IMAP fetcher for Gmail.
- *
- * Connects to imap.gmail.com using an App Password, fetches emails received
- * since `sinceDate`, and returns parsed mail objects. Uses the `imapflow`
- * library which provides a modern async interface over IMAP.
- *
- * Environment variables:
- *   GMAIL_USER      – Gmail address (e.g. doorayhwan809@gmail.com)
- *   GMAIL_APP_PASS  – Gmail App Password (spaces are stripped automatically)
+ * IMAP fetcher - two-pass approach like secondary-agent/gmail_tools.py:
+ * Pass 1: fast header fetch (subject, from, to, date) for all emails
+ * Pass 2: body fetch only for emails that pass privacy filter
  */
 
-import { ImapFlow } from "imapflow";
-import { simpleParser, type ParsedMail } from "mailparser";
-
-const IMAP_HOST = "imap.gmail.com";
-const IMAP_PORT = 993;
+import { execFileSync } from "child_process";
+import { writeFileSync, readFileSync, unlinkSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 
 export interface FetchedEmail {
   uid: number;
@@ -26,123 +19,173 @@ export interface FetchedEmail {
   html: string | null;
 }
 
-/**
- * Fetch all emails from INBOX received on or after `sinceDate`.
- *
- * Opens a readonly connection so we never mark messages as read.
- * Returns newest-first.
- */
-export async function fetchEmailsSince(
-  sinceDate: Date,
-): Promise<FetchedEmail[]> {
-  const user = process.env.GMAIL_USER?.trim();
-  const pass = process.env.GMAIL_APP_PASS?.replace(/\s/g, "");
+const LIST_SCRIPT = `
+import imaplib, email, json, sys, re, os
+from email.header import decode_header, make_header
+from datetime import datetime
 
-  if (!user || !pass) {
-    throw new Error(
-      "GMAIL_USER or GMAIL_APP_PASS is not set. " +
-        "Provide them as environment variables.",
-    );
+user = os.environ["GMAIL_USER"]
+pw = os.environ["GMAIL_APP_PASS"].replace(" ", "")
+since_iso = sys.argv[1]
+output_file = sys.argv[2]
+max_emails = int(sys.argv[3]) if len(sys.argv) > 3 else 50
+
+conn = imaplib.IMAP4_SSL("imap.gmail.com", 993)
+conn.login(user, pw)
+conn.select("INBOX", readonly=True)
+
+date_str = datetime.fromisoformat(since_iso.replace("Z","+00:00")).strftime("%d-%b-%Y")
+typ, data = conn.uid("search", None, f"SINCE {date_str}")
+uids = (data[0] or b"").split()
+if not uids:
+    json.dump([], open(output_file, "w"))
+    conn.logout()
+    sys.exit(0)
+
+uids = uids[-max_emails:]
+uid_set = b",".join(uids)
+typ, data = conn.uid("fetch", uid_set, "(FLAGS BODY.PEEK[HEADER.FIELDS (FROM TO SUBJECT DATE)])")
+
+results = []
+for item in data:
+    if not isinstance(item, tuple) or len(item) < 2:
+        continue
+    meta = item[0].decode("utf-8", errors="replace")
+    m_uid = re.search(r"UID (\\d+)", meta)
+    if not m_uid:
+        continue
+    headers = email.message_from_bytes(item[1])
+    def hdr(n):
+        raw = headers.get(n, "")
+        if not raw: return ""
+        try: return str(make_header(decode_header(raw))).strip()
+        except: return str(raw).strip()
+    to_raw = hdr("To")
+    to_list = [a.strip() for a in to_raw.split(",") if a.strip()]
+    results.append({
+        "uid": int(m_uid.group(1)),
+        "subject": hdr("Subject"),
+        "from": hdr("From"),
+        "to": to_list,
+        "date": hdr("Date"),
+    })
+
+conn.logout()
+results.reverse()
+with open(output_file, "w", encoding="utf-8") as f:
+    json.dump(results, f, ensure_ascii=False)
+`;
+
+const BODY_SCRIPT = `
+import imaplib, email, json, sys, re, os
+from email.header import decode_header, make_header
+
+user = os.environ["GMAIL_USER"]
+pw = os.environ["GMAIL_APP_PASS"].replace(" ", "")
+uids_str = sys.argv[1]
+output_file = sys.argv[2]
+
+conn = imaplib.IMAP4_SSL("imap.gmail.com", 993)
+conn.login(user, pw)
+conn.select("INBOX", readonly=True)
+
+def get_body(msg):
+    html_fallback = None
+    for part in (msg.walk() if msg.is_multipart() else [msg]):
+        ctype = part.get_content_type()
+        disp = str(part.get("Content-Disposition", ""))
+        if "attachment" in disp: continue
+        try: payload = part.get_payload(decode=True)
+        except: continue
+        if not payload: continue
+        charset = part.get_content_charset() or "utf-8"
+        try: text = payload.decode(charset, errors="replace")
+        except: text = payload.decode("utf-8", errors="replace")
+        if ctype == "text/plain":
+            return text.strip()[:10000]
+        if ctype == "text/html" and html_fallback is None:
+            html_fallback = text
+    if html_fallback:
+        text = re.sub(r"<[^>]+>", " ", html_fallback)
+        text = text.replace("&nbsp;", " ")
+        text = re.sub(r"\\s+", " ", text).strip()
+        return text[:10000]
+    return ""
+
+results = {}
+for uid_s in uids_str.split(","):
+    uid = uid_s.strip()
+    if not uid: continue
+    try:
+        typ, data = conn.uid("fetch", uid.encode(), "(BODY.PEEK[])")
+        if typ == "OK" and data and isinstance(data[0], tuple):
+            msg = email.message_from_bytes(data[0][1])
+            results[uid] = get_body(msg)
+    except Exception as e:
+        sys.stderr.write(f"UID {uid}: {e}\\n")
+
+conn.logout()
+with open(output_file, "w", encoding="utf-8") as f:
+    json.dump(results, f, ensure_ascii=False)
+`;
+
+export async function fetchEmailsSince(sinceDate: Date): Promise<FetchedEmail[]> {
+  // Pass 1: headers only (fast)
+  const headers = await runPython(LIST_SCRIPT, [sinceDate.toISOString(), "", "50"]);
+  const headerData = JSON.parse(headers) as Array<{
+    uid: number; subject: string; from: string; to: string[]; date: string;
+  }>;
+  console.log(`[imap] Headers fetched: ${headerData.length}`);
+
+  return headerData.map((h) => ({
+    uid: h.uid,
+    subject: h.subject,
+    from: h.from,
+    to: h.to,
+    date: h.date ? new Date(h.date) : null,
+    body: "",
+    html: null,
+  }));
+}
+
+export async function fetchBodies(uids: number[]): Promise<Record<number, string>> {
+  if (uids.length === 0) return {};
+  const out: Record<number, string> = {};
+  const batchSize = 3;
+
+  for (let i = 0; i < uids.length; i += batchSize) {
+    const batch = uids.slice(i, i + batchSize);
+    try {
+      const result = await runPython(BODY_SCRIPT, [batch.join(","), ""]);
+      const parsed = JSON.parse(result) as Record<string, string>;
+      for (const [k, v] of Object.entries(parsed)) out[Number(k)] = v;
+    } catch (err) {
+      console.warn(`[imap] Body batch failed:`, batch);
+    }
+    if (i + batchSize < uids.length) {
+      await new Promise((r) => setTimeout(r, 2000));
+    }
   }
 
-  const client = new ImapFlow({
-    host: IMAP_HOST,
-    port: IMAP_PORT,
-    secure: true,
-    auth: { user, pass },
-    logger: false,
-    socketTimeout: 120_000,
-    greetingTimeout: 30_000,
-  });
+  console.log(`[imap] Bodies fetched: ${Object.keys(out).length}/${uids.length}`);
+  return out;
+}
 
-  const emails: FetchedEmail[] = [];
+function runPython(script: string, args: string[]): Promise<string> {
+  const tmpOut = join(tmpdir(), `ssal-${Date.now()}.json`);
+  const tmpPy = join(tmpdir(), `ssal-${Date.now()}.py`);
+  args[1] = tmpOut; // replace output file placeholder
 
   try {
-    await client.connect();
-
-    // Open INBOX as readonly (no flags changes)
-    const lock = await client.getMailboxLock("INBOX");
-
-    try {
-      // Search for emails since the given date
-      const searchResult = await client.search(
-        { since: sinceDate },
-        { uid: true },
-      );
-
-      // ImapFlow.search() returns number[] | false
-      const uids: number[] = Array.isArray(searchResult) ? searchResult : [];
-
-      if (uids.length === 0) {
-        console.log("[imap] No new emails found since", sinceDate.toISOString());
-        return [];
-      }
-
-      // Limit to most recent 100 to avoid timeout
-      const maxEmails = 100;
-      const trimmedUids = uids.slice(-maxEmails);
-      console.log(`[imap] Found ${uids.length} email(s) since ${sinceDate.toISOString()}, fetching ${trimmedUids.length}`);
-
-      const batchSize = 20;
-      for (let i = 0; i < trimmedUids.length; i += batchSize) {
-        const batch = trimmedUids.slice(i, i + batchSize);
-        const uidRange = batch.join(",");
-
-        for await (const message of client.fetch(uidRange, {
-          uid: true,
-          source: true,
-        })) {
-          try {
-            if (!message.source) {
-              console.warn(`[imap] No source for message UID ${message.uid}, skipping`);
-              continue;
-            }
-            const parsed = await simpleParser(message.source) as ParsedMail;
-
-            const toAddresses: string[] = [];
-            if (parsed.to) {
-              const toField = Array.isArray(parsed.to) ? parsed.to : [parsed.to];
-              for (const addr of toField) {
-                if ("value" in addr) {
-                  for (const v of addr.value) {
-                    toAddresses.push(v.address || v.name || "");
-                  }
-                }
-              }
-            }
-
-            const fromText =
-              parsed.from?.value
-                .map((a) => `${a.name || ""} <${a.address || ""}>`.trim())
-                .join(", ") || "";
-
-            emails.push({
-              uid: message.uid,
-              subject: parsed.subject || "(no subject)",
-              from: fromText,
-              to: toAddresses,
-              date: parsed.date || null,
-              body: parsed.text || "",
-              html: parsed.html || null,
-            });
-          } catch (parseErr) {
-            console.warn(`[imap] Failed to parse message UID ${message.uid}:`, parseErr);
-          }
-        }
-      }
-    } finally {
-      lock.release();
-    }
+    writeFileSync(tmpPy, script);
+    execFileSync("python3", [tmpPy, ...args], {
+      env: { ...process.env },
+      timeout: 120_000,
+      stdio: ["pipe", "inherit", "inherit"],
+    });
+    return readFileSync(tmpOut, "utf-8");
   } finally {
-    await client.logout();
+    try { unlinkSync(tmpOut); } catch {}
+    try { unlinkSync(tmpPy); } catch {}
   }
-
-  // Newest first
-  emails.sort((a: FetchedEmail, b: FetchedEmail) => {
-    const da = a.date?.getTime() ?? 0;
-    const db = b.date?.getTime() ?? 0;
-    return db - da;
-  });
-
-  return emails;
 }
