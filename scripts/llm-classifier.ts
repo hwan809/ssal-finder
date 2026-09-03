@@ -8,12 +8,15 @@ import Anthropic from "@anthropic-ai/sdk";
 const SYSTEM_PROMPT = `KAIST 캠퍼스 행사 메일을 분석하여 식사/다과를 제공하는 행사인지 판별합니다.
 식사 제공 행사라면 아래 JSON으로 추출하세요. 아니면 {"is_food_event": false}만 반환하세요.
 
+현재 연도는 2026년입니다. 모든 날짜는 2026년으로 해석하세요.
+시간대는 반드시 한국 시간(+09:00)으로 출력하세요.
+
 출력 JSON:
 {
   "is_food_event": boolean,
   "title": "행사명",
-  "start_at": "ISO 8601",
-  "end_at": "ISO 8601 or null",
+  "start_at": "ISO 8601 (반드시 +09:00 포함, 예: 2026-09-03T16:00:00+09:00)",
+  "end_at": "ISO 8601 (+09:00) or null",
   "location": "장소",
   "food_type": "버거|도시락|샌드위치|간식|식사|기타",
   "food_note": "조건 (선착순, 사전신청 등)",
