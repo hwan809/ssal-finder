@@ -14,7 +14,7 @@
  *   - Remove personally identifiable header fields
  */
 
-import type { FetchedEmail } from "./imap-fetcher.js";
+import type { FetchedEmail } from "./imap-fetcher";
 
 /** Known group / mailing-list recipient patterns that indicate mass mail. */
 const GROUP_PATTERNS: RegExp[] = [

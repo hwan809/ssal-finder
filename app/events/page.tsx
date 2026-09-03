@@ -52,27 +52,28 @@ export default function EventsPage() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-lg border-b border-stone-200 dark:border-stone-800">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-extrabold text-lg" style={{ letterSpacing: "-0.03em" }}>
-            <span className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center text-sm emoji">🍚</span>
-            {S.APP_SHORT}
+          <Link href="/" className="flex items-center gap-2 font-extrabold text-base sm:text-lg shrink-0 whitespace-nowrap" style={{ letterSpacing: "-0.03em" }}>
+            <span className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center text-xs sm:text-sm emoji">🍚</span>
+            <span className="hidden sm:inline">{S.APP_SHORT}</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-end">
             <input
               type="text"
               placeholder={S.SEARCH_PLACEHOLDER}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-full px-4 py-1.5 text-sm w-48 sm:w-64 focus:outline-none focus:border-orange-500 transition-colors"
+              className="bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-full px-3 sm:px-4 py-1.5 text-sm min-w-0 flex-1 max-w-64 focus:outline-none focus:border-orange-500 transition-colors"
             />
             <Link
               href="/submit"
-              className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-bold hover:opacity-90 transition-opacity"
+              className="shrink-0 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-lg bg-orange-600 text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center"
             >
-              + {S.SUBMIT_TITLE}
+              <span className="sm:hidden">+</span>
+              <span className="hidden sm:inline">+ {S.SUBMIT_TITLE}</span>
             </Link>
             <Link
               href="/feed"
-              className="relative w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-800 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
+              className="shrink-0 relative w-8 h-8 rounded-lg border border-stone-200 dark:border-stone-800 flex items-center justify-center text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
             >
               🔔
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-500 border-2 border-stone-50 dark:border-stone-950" />

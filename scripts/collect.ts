@@ -23,11 +23,11 @@
  *   SUPABASE_SERVICE_KEY – Supabase service_role key
  */
 
-import { fetchEmailsSince, type FetchedEmail } from "./imap-fetcher.js";
-import { shouldProcess, maskForLLM } from "./privacy-filter.js";
-import { classifyEmails, type ClassifiedEvent } from "./llm-classifier.js";
-import { parseAndMapForm, extractFormId, type FormMapping } from "./form-parser.js";
-import { upsertEvent, getLastCollectionTime } from "./db-upserter.js";
+import { fetchEmailsSince, type FetchedEmail } from "./imap-fetcher";
+import { shouldProcess, maskForLLM } from "./privacy-filter";
+import { classifyEmails, type ClassifiedEvent } from "./llm-classifier";
+import { parseAndMapForm, extractFormId, type FormMapping } from "./form-parser";
+import { upsertEvent, getLastCollectionTime } from "./db-upserter";
 
 async function main() {
   const startTime = Date.now();

@@ -11,8 +11,8 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
-import type { ClassifiedEvent } from "./llm-classifier.js";
-import type { FormMapping } from "./form-parser.js";
+import type { ClassifiedEvent } from "./llm-classifier";
+import type { FormMapping } from "./form-parser";
 
 export interface UpsertResult {
   action: "added" | "updated" | "skipped";
