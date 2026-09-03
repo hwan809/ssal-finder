@@ -47,6 +47,13 @@ export interface Submission {
   created_at: string;
 }
 
+export interface Attendee {
+  id: string;
+  event_id: string;
+  nickname: string;
+  created_at: string;
+}
+
 export const FOOD_TYPES: FoodType[] = [
   "버거",
   "도시락",

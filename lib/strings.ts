@@ -95,6 +95,14 @@ export const S = {
   SUBMIT_FAIL: "제보 실패. 다시 시도해주세요.",
   SUBMIT_VALIDATING: "검증 중...",
 
+  // 참석
+  ATTEND_GOING: "나도 갈래",
+  ATTEND_GOING_DONE: "참석 표시됨!",
+  ATTEND_COUNT: (n: number) => `${n}명 참석 예정`,
+  ATTEND_NICKNAME: "닉네임",
+  ATTEND_NICKNAME_PLACEHOLDER: "익명의 카이스트인",
+  ATTEND_LIST_TITLE: "참석자",
+
   // 음식 타입
   FOOD_TYPES: {
     버거: "버거",

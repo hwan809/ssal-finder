@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { FOOD_COLORS } from "@/lib/colors";
 import { formatDateLong, formatTime, googleCalendarUrl } from "@/lib/calendar-utils";
 import { AutoRegisterButton } from "@/components/events/auto-register-button";
+import { AttendeeSection } from "@/components/events/attendee-section";
 import { S } from "@/lib/strings";
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -92,6 +93,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             {event.description}
           </div>
         )}
+        <AttendeeSection eventId={id} />
         <div className="flex flex-col gap-2">
           <AutoRegisterButton
             formId={event.form_id}
