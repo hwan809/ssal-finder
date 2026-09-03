@@ -1,69 +1,55 @@
-import Image from "next/image";
+import Link from "next/link";
+import { S } from "@/lib/strings";
+import { FOOD_COLORS } from "@/lib/colors";
+import type { FoodType } from "@/lib/types";
 
-export default function Home() {
+const LANDING_PILLS: { type: FoodType; cls: string }[] = [
+  { type: "버거", cls: "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300" },
+  { type: "도시락", cls: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" },
+  { type: "샌드위치", cls: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
+  { type: "간식", cls: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
+  { type: "식사", cls: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300" },
+];
+
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+      <div className="mb-8">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-4xl shadow-lg shadow-orange-500/20 mb-6">
+          <span className="emoji">🍚</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <h1
+          className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          {S.LANDING_TITLE}
+        </h1>
+        <p className="text-lg text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed">
+          {S.LANDING_SUBTITLE_1}
+        </p>
+      </div>
+
+      <Link
+        href="/events"
+        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-bold text-base hover:opacity-90 transition-opacity shadow-lg"
+      >
+        {S.LANDING_CTA}
+      </Link>
+
+      <div className="mt-16 flex flex-wrap justify-center gap-3">
+        {LANDING_PILLS.map(({ type, cls }) => (
+          <span
+            key={type}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold ${cls}`}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <span className="emoji">{FOOD_COLORS[type].icon}</span> {S.FOOD_TYPES[type]}
+          </span>
+        ))}
+      </div>
+
+      <p className="mt-12 text-xs text-stone-400 dark:text-stone-600">
+        {S.LANDING_FOOTER}
+      </p>
     </div>
   );
 }
