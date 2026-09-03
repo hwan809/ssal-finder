@@ -32,7 +32,7 @@ export function Header({ back, title, children }: HeaderProps) {
             className="text-[16px] font-black"
             style={{ letterSpacing: "-0.04em" }}
           >
-            <span className="emoji">🍚</span> 카이스트 쌀먹파인더
+            <span className="emoji">🍚</span> 카이스트 쌀먹찾기
           </Link>
         )}
         <div className="flex items-center gap-4">
