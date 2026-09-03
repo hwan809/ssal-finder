@@ -86,67 +86,67 @@ export function TossProfileFlow({ open, onClose, onComplete }: TossProfileFlowPr
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col max-w-[480px] mx-auto" style={{ background: "var(--bg)" }}>
-      <div className="px-5 py-4">
+    <div className="fixed inset-0 z-[80] flex flex-col max-w-[480px] mx-auto overflow-hidden" style={{ background: "var(--bg)" }}>
+      <div className="px-5 py-4 shrink-0">
         <button onClick={goBack} className="text-[18px]" style={{ color: "var(--fg)" }}>←</button>
       </div>
 
-      <div className="flex-1 px-6 flex flex-col overflow-y-auto">
+      <div className="px-6 shrink-0">
         {doneValues.map((val, i) => (
-          <div key={i} className="py-2.5 opacity-0 animate-[fadeIn_.3s_ease_forwards]">
-            <div className="text-[12px] font-semibold" style={{ color: "var(--g5)" }}>
+          <div key={i} className="pb-2 opacity-0 animate-[fadeIn_.3s_ease_forwards]">
+            <span className="text-[12px] font-semibold" style={{ color: "var(--g5)" }}>
               {LABELS[STEPS[i].key]}
-            </div>
-            <div className="text-[15px] font-bold mt-0.5">{val}</div>
+            </span>
+            <span className="text-[13px] font-bold ml-2">{val}</span>
           </div>
         ))}
-
-        <div className="flex-1 flex flex-col justify-center min-h-[200px]">
-          <div className="text-[22px] font-black mb-6 whitespace-pre-line" style={{ letterSpacing: "-0.04em", lineHeight: 1.35 }}>
-            {s.question}
-          </div>
-
-          {s.type === "chips" ? (
-            <div className="flex flex-wrap gap-2.5">
-              {s.options!.map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setCurValue(opt)}
-                  className="px-5 py-2.5 text-[15px] font-semibold transition-all active:scale-[0.96]"
-                  style={{
-                    border: `1.5px solid ${curValue === opt ? "var(--fg)" : "var(--g7)"}`,
-                    color: curValue === opt ? "var(--fg)" : "var(--g5)",
-                  }}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <input
-              ref={inputRef}
-              type={s.type}
-              value={curValue}
-              onChange={(e) => setCurValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && curValue && goNext()}
-              placeholder={s.placeholder}
-              inputMode={s.inputMode}
-              autoComplete="off"
-              autoCorrect="off"
-              className="w-full pb-3 text-[24px] font-bold outline-none"
-              style={{
-                background: "none",
-                borderBottom: `2px solid ${curValue ? "var(--fg)" : "var(--g7)"}`,
-                color: "var(--fg)",
-                letterSpacing: "-0.02em",
-                fontFamily: "inherit",
-              }}
-            />
-          )}
-        </div>
       </div>
 
-      <div className="px-6 pb-9 pt-4">
+      <div className="flex-1 px-6 flex flex-col justify-center min-h-0">
+        <div className="text-[22px] font-black mb-6 whitespace-pre-line" style={{ letterSpacing: "-0.04em", lineHeight: 1.35 }}>
+          {s.question}
+        </div>
+
+        {s.type === "chips" ? (
+          <div className="flex flex-wrap gap-2.5">
+            {s.options!.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setCurValue(opt)}
+                className="px-5 py-2.5 text-[15px] font-semibold transition-all active:scale-[0.96]"
+                style={{
+                  border: `1.5px solid ${curValue === opt ? "var(--fg)" : "var(--g7)"}`,
+                  color: curValue === opt ? "var(--fg)" : "var(--g5)",
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <input
+            ref={inputRef}
+            type={s.type}
+            value={curValue}
+            onChange={(e) => setCurValue(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && curValue && goNext()}
+            placeholder={s.placeholder}
+            inputMode={s.inputMode}
+            autoComplete="off"
+            autoCorrect="off"
+            className="w-full pb-3 text-[24px] font-bold outline-none"
+            style={{
+              background: "none",
+              borderBottom: `2px solid ${curValue ? "var(--fg)" : "var(--g7)"}`,
+              color: "var(--fg)",
+              letterSpacing: "-0.02em",
+              fontFamily: "inherit",
+            }}
+          />
+        )}
+      </div>
+
+      <div className="px-6 pb-9 pt-4 shrink-0">
         <button
           onClick={goNext}
           disabled={!curValue}
