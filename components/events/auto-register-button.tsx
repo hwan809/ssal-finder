@@ -1,89 +1,81 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { getProfile, submitForm, type FormMapping } from "@/lib/auto-register";
-import { ProfileForm } from "@/components/profile/profile-form";
 import { S } from "@/lib/strings";
 
 interface AutoRegisterButtonProps {
   formId: string | null;
   formMapping: Record<string, string> | null;
   registerUrl: string | null;
+  onNeedProfile: () => void;
 }
 
-export function AutoRegisterButton({ formId, formMapping, registerUrl }: AutoRegisterButtonProps) {
-  const [status, setStatus] = useState<"idle" | "loading" | "done" | "fail" | "no-profile">("idle");
-  const [showProfile, setShowProfile] = useState(false);
-  const hasAutoRegister = formId && formMapping && Object.keys(formMapping).length > 0;
+export interface AutoRegisterButtonHandle {
+  retry: () => void;
+}
 
-  const handleAutoRegister = async () => {
-    const profile = getProfile();
-    if (!profile || !profile.name) {
-      setStatus("no-profile");
-      setShowProfile(true);
-      return;
-    }
-    if (!formId || !formMapping) return;
+type Status = "idle" | "loading" | "done" | "fail";
 
-    setStatus("loading");
-    const ok = await submitForm(formId, formMapping as FormMapping, profile);
-    setStatus(ok ? "done" : "fail");
-    if (ok) setTimeout(() => setStatus("idle"), 3000);
-  };
+export const AutoRegisterButton = forwardRef<AutoRegisterButtonHandle, AutoRegisterButtonProps>(
+  function AutoRegisterButton({ formId, formMapping, registerUrl, onNeedProfile }, ref) {
+    const [status, setStatus] = useState<Status>("idle");
+    const hasAutoRegister = !!(formId && formMapping && Object.keys(formMapping).length > 0);
 
-  const statusStyles = {
-    idle: "bg-orange-600 text-white hover:opacity-90",
-    loading: "bg-orange-400 text-white cursor-wait",
-    done: "bg-green-500 text-white",
-    fail: "bg-red-500 text-white",
-    "no-profile": "bg-orange-600 text-white",
-  };
+    const handleAutoRegister = useCallback(async () => {
+      const profile = getProfile();
+      if (!profile || !profile.name) {
+        onNeedProfile();
+        return;
+      }
+      if (!formId || !formMapping) return;
 
-  const statusText = {
-    idle: `⚡ ${S.AUTO_REGISTER}`,
-    loading: "...",
-    done: `✓ ${S.AUTO_REGISTER_DONE}`,
-    fail: `✕ ${S.AUTO_REGISTER_FAIL}`,
-    "no-profile": `⚡ ${S.AUTO_REGISTER}`,
-  };
+      setStatus("loading");
+      const ok = await submitForm(formId, formMapping as FormMapping, profile);
+      setStatus(ok ? "done" : "fail");
+      if (ok) setTimeout(() => setStatus("idle"), 3000);
+    }, [formId, formMapping, onNeedProfile]);
 
-  return (
-    <div className="space-y-2">
-      {hasAutoRegister ? (
-        <button
-          onClick={handleAutoRegister}
-          disabled={status === "loading"}
-          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all ${statusStyles[status]}`}
-        >
-          {statusText[status]}
-        </button>
-      ) : registerUrl ? (
+    useImperativeHandle(ref, () => ({ retry: handleAutoRegister }), [handleAutoRegister]);
+
+    if (!hasAutoRegister) {
+      return registerUrl ? (
         <a
           href={registerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-600 text-white font-bold text-sm hover:opacity-90 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-[15px] font-bold transition-opacity active:opacity-70"
+          style={{ background: "var(--fg)", color: "var(--bg)" }}
         >
           {S.DETAIL_REGISTER_CTA}
         </a>
-      ) : null}
+      ) : null;
+    }
 
-      {status === "no-profile" && (
-        <div className="text-xs text-orange-600 text-center mb-1">{S.AUTO_REGISTER_NO_PROFILE}</div>
-      )}
+    const styles: Record<Status, React.CSSProperties> = {
+      idle: { background: "var(--fg)", color: "var(--bg)" },
+      loading: { background: "var(--g7)", color: "var(--g5)" },
+      done: { background: "var(--fg)", color: "var(--bg)" },
+      fail: { background: "var(--bg)", color: "var(--point)", border: "1.5px solid var(--point)" },
+    };
 
-      {(showProfile || status === "no-profile") && (
-        <ProfileForm onClose={() => { setShowProfile(false); setStatus("idle"); }} />
-      )}
+    const content: Record<Status, { icon: string; label: string }> = {
+      idle: { icon: "⚡", label: S.AUTO_REGISTER },
+      loading: { icon: "", label: "..." },
+      done: { icon: "✓", label: S.AUTO_REGISTER_DONE },
+      fail: { icon: "✕", label: S.AUTO_REGISTER_FAIL },
+    };
 
-      {hasAutoRegister && !showProfile && status !== "no-profile" && (
-        <button
-          onClick={() => setShowProfile(!showProfile)}
-          className="w-full text-xs text-stone-400 hover:text-stone-600 transition-colors py-1"
-        >
-          {showProfile ? "닫기" : "프로필 설정"}
-        </button>
-      )}
-    </div>
-  );
-}
+    return (
+      <button
+        onClick={handleAutoRegister}
+        disabled={status === "loading"}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-[15px] font-bold transition-all"
+        style={{ ...styles[status], cursor: status === "loading" ? "wait" : "pointer" }}
+      >
+        {content[status].icon && <span className="emoji">{content[status].icon}</span>}
+        {content[status].label}
+      </button>
+    );
+  },
+);
