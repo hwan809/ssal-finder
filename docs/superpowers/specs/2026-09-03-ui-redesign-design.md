@@ -28,11 +28,12 @@
 
 ## 타이포
 
-- 시스템 폰트 스택 (Pretendard Variable 유지)
+- **본문 폰트**: Wanted Sans (기존 Pretendard Variable 대체). 기기 간 일관성 확보 목적. woff2 셀프호스팅.
 - 추천 타이틀: 18px / 800 / letter-spacing -0.03em
 - 본문: 15px / 700
 - 서브: 12-13px / color g5
 - 시간: tabular-nums
+- **이모지**: Tossface 유지
 
 ## 페이지 구조
 
