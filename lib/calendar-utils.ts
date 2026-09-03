@@ -63,6 +63,9 @@ export function getTimeSlot(iso: string): "morning" | "lunch" | "dinner" {
 }
 
 export function shortFoodName(foodNote: string | null, foodType: string): string {
-  if (foodNote && foodNote.length <= 8) return foodNote;
-  return foodType;
+  if (!foodNote) return foodType === "기타" ? "음식" : foodType;
+  if (foodNote.length <= 8) return foodNote;
+  const first = foodNote.split(/[,،\s]/)[0].trim();
+  if (first.length >= 2 && first.length <= 8) return first;
+  return foodType === "기타" ? foodNote.slice(0, 6) : foodType;
 }

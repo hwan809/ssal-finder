@@ -83,7 +83,7 @@ function EventDetailContent({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex items-center gap-1.5 mb-2">
           <span className="emoji text-[15px]">{FOOD_ICONS[event.food_type]}</span>
           <span className="text-[13px] font-bold" style={{ color: "var(--g5)" }}>
-            {shortFoodName(event.food_note, event.food_type)}
+            {event.food_note || event.food_type}
           </span>
         </div>
 
