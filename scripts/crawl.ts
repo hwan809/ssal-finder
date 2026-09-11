@@ -286,7 +286,9 @@ async function processSite(site: NoticeSite, args: Args, summary: Summary): Prom
       const message = (err as Error).message;
       if (message.startsWith("HTTP 4")) {
         // Permanently broken link: record it so it stops retrying every 6 h.
-        console.warn(`[crawl]   dead detail link, recording as seen: ${link.url} — ${message}`);
+        console.warn(
+          `[crawl]   dead detail link${args.dryRun ? "" : ", recording as seen"}: ${link.url} — ${message}`,
+        );
         rows.push({
           url: link.url,
           dept: site.dept,
