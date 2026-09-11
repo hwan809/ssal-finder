@@ -60,3 +60,74 @@ export function extractNoticeLinks(html: string, site: NoticeSite): NoticeLink[]
 
   return [...seen.values()];
 }
+
+const STRIP_SELECTOR = "script, style, noscript, nav, header, footer, iframe, form";
+const CONTENT_CANDIDATES = [
+  "article",
+  "main",
+  ".board-view",
+  ".board_view",
+  ".view",
+  ".bbs-view",
+  "#content",
+  ".content",
+  "#container",
+  "body",
+];
+const URL_REGEX = /https?:\/\/[^\s<>"')\]]+/g;
+
+/**
+ * Reduce a detail page to plain text plus the absolute URLs it contains.
+ * Strips chrome (nav/header/footer/scripts), then picks the first candidate
+ * container with >= 200 chars of text; falls back to <body>.
+ */
+export function extractNoticeText(
+  html: string,
+  pageUrl: string,
+): { text: string; urls: string[] } {
+  const $ = cheerio.load(html);
+  $(STRIP_SELECTOR).remove();
+
+  let $root = $("body") as any;
+  for (const sel of CONTENT_CANDIDATES) {
+    const $el = $(sel).first();
+    if ($el.length === 0) continue;
+    const len = $el.text().replace(/\s+/g, " ").trim().length;
+    if (len >= 200) {
+      $root = $el;
+      break;
+    }
+  }
+
+  const text = $root.text().replace(/\s+/g, " ").trim();
+
+  const urls = new Set<string>();
+  $root.find("a[href]").each((_: number, el: any) => {
+    const u = resolveHref($(el).attr("href"), pageUrl);
+    if (u) urls.add(u);
+  });
+  for (const m of text.match(URL_REGEX) || []) {
+    urls.add(m);
+  }
+
+  return { text, urls: [...urls] };
+}
+
+/**
+ * Fetch a page as text with a timeout. Throws on non-2xx or timeout.
+ */
+export async function fetchHtml(url: string, timeoutMs = 15000): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}

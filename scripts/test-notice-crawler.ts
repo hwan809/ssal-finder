@@ -5,7 +5,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "fs";
-import { extractNoticeLinks, type NoticeSite } from "./notice-crawler";
+import { extractNoticeLinks, type NoticeSite, extractNoticeText } from "./notice-crawler";
 
 function fixture(name: string): string {
   return readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -53,4 +53,35 @@ test("extractNoticeLinks: dedupes by url and drops empty-text anchors", () => {
     { url: "https://mathsci.kaist.ac.kr/ko/xe/notice/1", title: "첫 번째 공지" },
     { url: "https://mathsci.kaist.ac.kr/ko/xe/notice/2", title: "두 번째" },
   ]);
+});
+
+test("extractNoticeText: mathsci detail returns substantial text without script content", () => {
+  const { text, urls } = extractNoticeText(fixture("mathsci-detail.html"), "https://mathsci.kaist.ac.kr/ko/xe/notice/1");
+  assert.ok(text.length >= 200, `text too short: ${text.length}`);
+  assert.ok(!/<script|function\s*\(|document\.getElementById/.test(text), "script leaked into text");
+  assert.ok(Array.isArray(urls));
+});
+
+test("extractNoticeText: physics detail returns substantial text", () => {
+  const { text } = extractNoticeText(fixture("physics-detail.html"), "https://physics.kaist.ac.kr/index.php?mid=p_news_event1");
+  assert.ok(text.length >= 200, `text too short: ${text.length}`);
+});
+
+test("extractNoticeText: picks the largest content block, collects absolute urls", () => {
+  const html = `<html><body>
+    <nav><a href="/menu">메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴</a></nav>
+    <div id="content">
+      <h1>간식 나눔 행사 안내</h1>
+      <p>${"본문 내용입니다. ".repeat(30)}</p>
+      <p>신청: <a href="https://forms.gle/abc123">여기</a> 또는 https://example.com/x?y=1</p>
+      <script>var evil = document.getElementById("x");</script>
+    </div>
+    <footer>${"푸터 ".repeat(50)}</footer>
+  </body></html>`;
+  const { text, urls } = extractNoticeText(html, "https://mathsci.kaist.ac.kr/ko/xe/notice/1");
+  assert.ok(text.includes("간식 나눔 행사 안내"));
+  assert.ok(!text.includes("메뉴 메뉴"), "nav leaked");
+  assert.ok(!text.includes("푸터"), "footer leaked");
+  assert.ok(!text.includes("evil"), "script leaked");
+  assert.deepEqual(urls, ["https://forms.gle/abc123", "https://example.com/x?y=1"]);
 });
