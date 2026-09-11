@@ -38,8 +38,18 @@ export interface NoticeSite {
   dept: string;        // human label, e.g. "전산학부"
   listUrl: string;     // absolute URL of the board's first page
   linkPattern: RegExp; // tested against the resolved absolute href
+  jsLink?: {           // for boards whose anchors are javascript:/onclick only
+    idPattern: RegExp;                 // one capture group, tested on href + onclick
+    detailUrl: (id: string) => string; // builds the absolute detail URL
+  };
 }
 ```
+
+Six boards (전산학부, 정보보호대학원, 생명과학과, 기술경영학부, 기술경영전문대학원,
+새내기과정학부) render post links as `javascript:readArticle(...)`,
+`onclick="fn_selectDoc('id')"` or `javascript:view('id')`; `jsLink` recovers
+their plain-GET detail URLs. Survey on 2026-09-11: 48 departments, 40 crawlable,
+8 skipped (React SPA, empty/new boards, no board, duplicates of 경영대학).
 
 One entry per KAIST department that has a public Korean notice/news board.
 Departments whose site is down or has no board are omitted with a comment.
@@ -114,7 +124,7 @@ alter table crawled_notices enable row level security;
 -- no anon policy: service role only
 ```
 
-Also appended to `full_migration.sql`.
+(`full_migration.sql` is not updated; migrations 004/005 are not in it either.)
 
 ## Scheduling
 
