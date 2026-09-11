@@ -12,6 +12,15 @@ export interface NoticeSite {
   listUrl: string;
   /** Tested against the resolved absolute href of each anchor */
   linkPattern: RegExp;
+  /**
+   * For boards whose anchors are javascript:/onclick only.
+   * idPattern (one capture group) is tested against `href + " " + onclick`;
+   * the captured id is passed to detailUrl to build the absolute URL.
+   */
+  jsLink?: {
+    idPattern: RegExp;
+    detailUrl: (id: string) => string;
+  };
 }
 
 export interface NoticeLink {
@@ -32,7 +41,7 @@ function resolveHref(href: string | undefined, base: string): string | null {
     return null;
   }
   try {
-    const u = new URL(trimmed, base);
+    const u = new URL(trimmed.replace(/;jsessionid=[^?#]*/i, ""), base);
     if (u.protocol !== "http:" && u.protocol !== "https:") return null;
     u.hash = "";
     return u.toString();
@@ -50,8 +59,16 @@ export function extractNoticeLinks(html: string, site: NoticeSite): NoticeLink[]
   const $ = cheerio.load(html);
   const seen = new Map<string, NoticeLink>();
 
-  $("a[href]").each((_, el) => {
-    const url = resolveHref($(el).attr("href"), site.listUrl);
+  $("a[href], a[onclick]").each((_, el) => {
+    const href = $(el).attr("href") ?? "";
+    let url = resolveHref(href, site.listUrl);
+
+    if (!url && site.jsLink) {
+      const onclick = $(el).attr("onclick") ?? "";
+      const m = site.jsLink.idPattern.exec(`${href} ${onclick}`);
+      if (m && m[1]) url = site.jsLink.detailUrl(m[1]);
+    }
+
     if (!url || !site.linkPattern.test(url)) return;
     const title = $(el).text().replace(/\s+/g, " ").trim();
     if (!title) return;

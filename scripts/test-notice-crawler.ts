@@ -14,7 +14,7 @@ function fixture(name: string): string {
 const MATHSCI: NoticeSite = {
   dept: "수리과학과",
   listUrl: "https://mathsci.kaist.ac.kr/ko/xe/notice/",
-  linkPattern: /^https:\/\/mathsci\.kaist\.ac\.kr\/ko\/xe\/notice\/\d+$/,
+  linkPattern: /^https:\/\/mathsci\.kaist\.ac\.kr\/ko\/xe\/notice\/\d+/,
 };
 
 const PHYSICS: NoticeSite = {
@@ -84,4 +84,61 @@ test("extractNoticeText: picks the largest content block, collects absolute urls
   assert.ok(!text.includes("푸터"), "footer leaked");
   assert.ok(!text.includes("evil"), "script leaked");
   assert.deepEqual(urls, ["https://forms.gle/abc123", "https://example.com/x?y=1"]);
+});
+
+const CS: NoticeSite = {
+  dept: "전산학부",
+  listUrl: "https://cs.kaist.ac.kr/bbs/notice",
+  linkPattern: /^https:\/\/cs\.kaist\.ac\.kr\/bbs\/notice\/\d+$/,
+  jsLink: {
+    idPattern: /readArticle\(\s*'notice'\s*,\s*'(\d+)'/,
+    detailUrl: (id) => `https://cs.kaist.ac.kr/bbs/notice/${id}`,
+  },
+};
+
+const BIO: NoticeSite = {
+  dept: "생명과학과",
+  listUrl: "https://bio.kaist.ac.kr/doc/ko/selectDocList.do?menuSeq=3363&bbsSeq=106",
+  linkPattern: /^https:\/\/bio\.kaist\.ac\.kr\/doc\/ko\/selectDoc\.do\?docSeq=\d+/,
+  jsLink: {
+    idPattern: /fn_selectDoc\(\s*'(\d+)'/,
+    detailUrl: (id) => `https://bio.kaist.ac.kr/doc/ko/selectDoc.do?docSeq=${id}&menuSeq=3363&bbsSeq=106`,
+  },
+};
+
+test("jsLink: cs readArticle hrefs become /bbs/notice/<id> links", () => {
+  const links = extractNoticeLinks(fixture("cs-list.html"), CS);
+  assert.ok(links.length >= 3, `expected >=3, got ${links.length}`);
+  for (const l of links) {
+    assert.match(l.url, CS.linkPattern);
+    assert.ok(l.title.length > 0);
+  }
+});
+
+test("jsLink: bio onclick fn_selectDoc becomes selectDoc.do links", () => {
+  const links = extractNoticeLinks(fixture("bio-list.html"), BIO);
+  assert.ok(links.length >= 3, `expected >=3, got ${links.length}`);
+  for (const l of links) {
+    assert.match(l.url, BIO.linkPattern);
+    assert.ok(l.title.length > 0);
+  }
+});
+
+test("jsLink: ignores anchors whose id pattern does not match; plain hrefs still work", () => {
+  const html = `
+    <a href="javascript:readArticle('notice', '10', '1', 'subject', '', '151')">공지 열</a>
+    <a href="javascript:readArticle('etcnotice', '11', '1', 'subject', '', '288')">기타 공지</a>
+    <a href="javascript:void(0)">닫기</a>
+    <a href="/bbs/notice/12">직접 링크</a>`;
+  const links = extractNoticeLinks(html, CS);
+  assert.deepEqual(links, [
+    { url: "https://cs.kaist.ac.kr/bbs/notice/10", title: "공지 열" },
+    { url: "https://cs.kaist.ac.kr/bbs/notice/12", title: "직접 링크" },
+  ]);
+});
+
+test("resolveHref strips ;jsessionid", () => {
+  const html = `<a href="/ko/xe/notice/5;jsessionid=ABC123?x=1">세션 링크</a>`;
+  const links = extractNoticeLinks(html, MATHSCI);
+  assert.deepEqual(links, [{ url: "https://mathsci.kaist.ac.kr/ko/xe/notice/5?x=1", title: "세션 링크" }]);
 });
