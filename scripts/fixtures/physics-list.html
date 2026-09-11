@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<!-- META -->
+<meta charset="utf-8">
+<meta name="Generator" content="XpressEngine">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- TITLE -->
+<title>Physics</title>
+<!-- CSS -->
+<link rel="stylesheet" href="/common/css/xe.css?20180206112356" />
+<link rel="stylesheet" href="/common/js/plugins/ui/jquery-ui.min.css?20180206112356" />
+<link rel="stylesheet" href="/modules/board/skins/xet_simple_board/css/button_flat.css?20180206173820" />
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/xeicon/1.0.4/xeicon.min.css" />
+<link rel="stylesheet" href="/modules/board/skins/xet_simple_board/css/board.css?20180206173820" />
+<link rel="stylesheet" href="/modules/board/skins/xet_simple_board/css/_style_list.css?20180206173820" />
+<link rel="stylesheet" href="/modules/board/skins/xet_simple_board/css/view_document.css?20180206173820" />
+<link rel="stylesheet" href="/modules/board/skins/xet_simple_board/css/write_form.css?20180206173820" />
+<link rel="stylesheet" href="/modules/board/skins/xet_simple_board/css/css3.css?20180206173820" />
+<link rel="stylesheet" href="/modules/editor/styles/ckeditor_light/style.css?20180207120357" />
+<!-- JS -->
+<script>
+var current_url = "https://physics.kaist.ac.kr/?mid=p_news_event1";
+var request_uri = "https://physics.kaist.ac.kr/";
+var current_mid = "p_news_event1";
+var waiting_message = "서버에 요청 중입니다. 잠시만 기다려주세요.";
+var ssl_actions = new Array();
+var default_url = "https://physics.kaist.ac.kr/";
+</script>
+<!--[if lt IE 9]><script src="/common/js/jquery-1.x.js?20180206112356"></script>
+<![endif]--><!--[if gte IE 9]><!--><script src="/common/js/jquery.js?20180206112356"></script>
+<!--<![endif]--><script src="/common/js/modernizr.js?20180206112356"></script>
+<script src="/common/js/x.js?20180206112356"></script>
+<script src="/common/js/URI.js?20180206112356"></script>
+<script src="/common/js/blankshield.min.js?20180206112356"></script>
+<script src="/common/js/common.js?20180206112356"></script>
+<script src="/common/js/js_app.js?20180206112356"></script>
+<script src="/common/js/xml2json.js?20180206112356"></script>
+<script src="/common/js/xml_handler.js?20180206112356"></script>
+<script src="/common/js/xml_js_filter.js?20180206112356"></script>
+<script src="/modules/board/tpl/js/board.js?20180206112356"></script>
+<script src="/modules/board/skins/xet_simple_board/js/board.js?20180206173820"></script>
+<!--[if lt IE 9]><script src="/common/js/respond.min.js?20180206112356"></script>
+<![endif]--><!-- RSS -->
+<link rel="alternate" type="application/rss+xml" title="RSS" href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;act=rss" /><link rel="alternate" type="application/atom+xml" title="Atom" href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;act=atom" /><!-- ICON -->
+
+<script>
+						if(!captchaTargetAct) {var captchaTargetAct = [];}
+						captchaTargetAct.push("procBoardInsertDocument","procBoardInsertComment","procIssuetrackerInsertIssue","procIssuetrackerInsertHistory","procTextyleInsertComment");
+						</script>
+<script>
+						if(!captchaTargetAct) {var captchaTargetAct = [];}
+						captchaTargetAct.push("procMemberFindAccount","procMemberResendAuthMail","procMemberInsert");
+						</script>
+
+<link rel="canonical" href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1" />
+<meta property="og:locale" content="ko_KR" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://physics.kaist.ac.kr/index.php?mid=p_news_event1" />
+<meta property="og:title" content="KAIST Physics - Notice" />
+<link rel="stylesheet" type="text/css" href="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/css/common.css" />
+<link rel="stylesheet" type="text/css" href="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/css/layout.css" />
+<link rel="stylesheet" type="text/css" href="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/css/sub.css" /><script>
+//<![CDATA[
+xe.current_lang = "ko";
+xe.cmd_find = "찾기";
+xe.cmd_cancel = "취소";
+xe.cmd_confirm = "확인";
+xe.msg_no_root = "루트는 선택 할 수 없습니다.";
+xe.msg_no_shortcut = "바로가기는 선택 할 수 없습니다.";
+xe.msg_select_menu = "대상 메뉴 선택";
+//]]>
+</script>
+</head>
+<body>
+ 
+<!-- css link -->
+
+
+
+<script src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/js/menu.js"></script>
+ 
+<!-- 기본 세팅 -->
+<div id="wrap">
+	<div class="skip">
+		<dl>
+			<dt class="skipH">바로가기 메뉴</dt>
+			<dd>
+				<a class="skipNavi" href="#logo">메뉴 바로가기</a>
+			</dd>
+			<dd>
+				<a class="skipNavi" href="#contents">본문 바로가기</a>
+			</dd>
+			<dd>
+				<a class="skipNavi" href="#footer">하단 바로가기</a>
+			</dd>
+		</dl>
+	</div>
+	<!-- //skip -->
+	
+	<!-- header -->
+	<div id="header">
+		<div class="top-area">
+			<ul class="t-menu">
+									<li class="login"><a href="/index.php?mid=Account&act=dispMemberLoginForm">LOGIN</a></li>
+					<!-- <li><a href="/index.php?mid=Account&act=dispMemberSignUpForm">JOIN</a></li> -->
+								
+					
+					<li class="lang"><a href="#" onclick="doChangeLangType('en');return true;">ENG</a></li>
+							</ul>
+			<h1 id="logo"><a href="https://physics.kaist.ac.kr/"></a></h1>
+		
+			<div class="r-menu">
+				<form action="https://physics.kaist.ac.kr/" method="get"><input type="hidden" name="error_return_url" value="/index.php?mid=p_news_event1" />
+					<input type="hidden" name="vid" value="" />
+					<input type="hidden" name="mid" value="p_news_event1" />
+					<input type="hidden" name="act" value="IS" />
+					<input type="text" name="is_keyword"  class="search_int" placeholder="Keywords..."  value="" />
+					<input class="search_btn" type="submit" value="" />
+					<a href="#" class="sitemap_btn"></a>
+				</form>
+				
+			</div>
+			
+			
+		</div>
+		
+		<div class="gnb-wrap">
+			<div class="con-area">
+				<ul class="menu">
+					<li>
+						<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1">소식</a>
+						<ul class="snb1">
+															<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1">공지사항</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2">뉴스</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3">세미나</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4">채용</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5">예약</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6">뉴스레터</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=video_board"><a href="https://physics.kaist.ac.kr/index.php?mid=video_board">Meet our Faculty</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2"><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2">Meet our Students</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar"><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar">Physics Calendar</a></li>													</ul>
+					</li><li>
+						<a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1">학과소개</a>
+						<ul class="snb1">
+															<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1">개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus3"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus3">연락처</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus4"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus4">오시는길</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5">교수초빙</a></li>													</ul>
+					</li><li>
+						<a href="/index.php?mid=p_people1&amp;category=193">구성원</a>
+						<ul class="snb1">
+															<li><a href="/index.php?mid=p_people1&amp;category=193"><a href="/index.php?mid=p_people1&amp;category=193">교수진</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_people2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_people2">행정팀</a></li>													</ul>
+					</li><li>
+						<a href="https://physics.kaist.ac.kr/index.php?mid=p_research1">연구</a>
+						<ul class="snb1">
+															<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_research1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_research1">연구개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_research2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_research2">연구하이라이트</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_research3_1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_research3_1">연구영역</a></li>													</ul>
+					</li><li>
+						<a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1">교육</a>
+						<ul class="snb1">
+															<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1">개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic3"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic3">학위</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic2">과정</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic4"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic4">대학원 입학</a></li>													</ul>
+					</li><li>
+						<a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1">기부&amp;동문</a>
+						<ul class="snb1">
+															<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1">개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni2">기부 방법</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni6"><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni6">기부자 명단</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=page_zMgb12"><a href="https://physics.kaist.ac.kr/index.php?mid=page_zMgb12">동문소식</a></li>													</ul>
+					</li>				</ul>
+				<div class="menu-snb-box"></div>
+			</div>
+		</div>
+		<div id="pop-sitmap" class="sitemap-modal fade">
+			<div class="sitemap-box">
+				<p class="st-t">SITEMAP<span class="pop-close"><img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/custom/m_close.png" alt="사이트맵 닫기" /></span></p>
+				<div class="st-box">
+					<dl>
+						<dt>소식</dt>
+						<dd>
+							<ul>
+								<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1">공지사항</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2">뉴스</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3">세미나</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4">채용</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5">예약</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6">뉴스레터</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=video_board" ><a href="https://physics.kaist.ac.kr/index.php?mid=video_board">Meet our Faculty</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2" ><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2">Meet our Students</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar" ><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar">Physics Calendar</a></li>							</ul>
+						</dd>
+					</dl><dl>
+						<dt>학과소개</dt>
+						<dd>
+							<ul>
+								<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1">개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus3" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus3">연락처</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus4" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus4">오시는길</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5">교수초빙</a></li>							</ul>
+						</dd>
+					</dl><dl>
+						<dt>구성원</dt>
+						<dd>
+							<ul>
+								<li><a href="/index.php?mid=p_people1&amp;category=193" ><a href="/index.php?mid=p_people1&amp;category=193">교수진</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_people2" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_people2">행정팀</a></li>							</ul>
+						</dd>
+					</dl><dl>
+						<dt>연구</dt>
+						<dd>
+							<ul>
+								<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_research1" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_research1">연구개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_research2" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_research2">연구하이라이트</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_research3_1" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_research3_1">연구영역</a></li>							</ul>
+						</dd>
+					</dl><dl>
+						<dt>교육</dt>
+						<dd>
+							<ul>
+								<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1">개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic3" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic3">학위</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic2" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic2">과정</a></li>							</ul>
+						</dd>
+					</dl><dl>
+						<dt>기부&amp;동문</dt>
+						<dd>
+							<ul>
+								<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1">개요</a></li><li><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni2" ><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni2">기부 방법</a></li>							</ul>
+						</dd>
+					</dl>				</div>
+			</div>
+		</div>
+		
+		
+		<div class="gnb-mo-wrap">
+			<a href="/index.php?mid=PhysicsCalendar" class="mo-cal"><img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/cal_mo_icon.png" alt="구글캘린더"></a>
+			<span class="mo-btn"><img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/common/mo_menu_btn.png" alt="모바일 메뉴 버튼"></span>
+			<div class="mo-header">
+				
+				<div class="h-box">
+					<div class="tit-box">
+													<span class="rmar_15 active" onclick="doChangeLangType('ko');return true;">KOR</span><span onclick="doChangeLangType('en');return true;">ENG</span>
+												<span class="mo-close"><img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/common/mo_close_btn.png" alt="모바일 메뉴 버튼"></span>
+					</div>
+				</div>
+				<div class="con-box">
+					<ul class="mo-gnb" id="moMenu">
+						<li  class="open">
+							<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1">소식</a>
+							<ul>
+								<li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1">공지사항</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2">뉴스</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3">세미나</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4">채용</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5">예약</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6">뉴스레터</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=video_board"><a href="https://physics.kaist.ac.kr/index.php?mid=video_board">Meet our Faculty</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2"><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2">Meet our Students</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar"><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar">Physics Calendar</a></li>							</ul>
+						</li><li >
+							<a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1">학과소개</a>
+							<ul>
+								<li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus1">개요</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus3"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus3">연락처</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus4"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus4">오시는길</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5"><a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5">교수초빙</a></li>							</ul>
+						</li><li >
+							<a href="/index.php?mid=p_people1&amp;category=193">구성원</a>
+							<ul>
+								<li ><a href="/index.php?mid=p_people1&amp;category=193"><a href="/index.php?mid=p_people1&amp;category=193">교수진</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_people2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_people2">행정팀</a></li>							</ul>
+						</li><li >
+							<a href="https://physics.kaist.ac.kr/index.php?mid=p_research1">연구</a>
+							<ul>
+								<li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_research1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_research1">연구개요</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_research2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_research2">연구하이라이트</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_research3_1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_research3_1">연구영역</a></li>							</ul>
+						</li><li >
+							<a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1">교육</a>
+							<ul>
+								<li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic1">개요</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic3"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic3">학위</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_academic2">과정</a></li>							</ul>
+						</li><li >
+							<a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1">기부&amp;동문</a>
+							<ul>
+								<li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1"><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni1">개요</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni2"><a href="https://physics.kaist.ac.kr/index.php?mid=p_giving_alumni2">기부 방법</a></li>							</ul>
+						</li>			
+					</ul>
+				</div>
+				
+				<ul class="mo-login-btn">
+											<li class="login"><a href="/index.php?mid=Account&act=dispMemberLoginForm">LOGIN</a></li>
+									</ul>
+				
+			</div>
+				
+			<div class="bodyBg"></div>
+		</div>
+	</div>	<!-- // header -->
+	 
+		<!-- visual (Start) -->
+<div id="visual_wrpar">
+	<div id="visual_container">
+		<div class="sub_visual_pc"><img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/sub/sub_visual.jpg" alt="visual"></div>
+		<div class="sub_visual_mo"><img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/sub/sub_visual_mo.jpg" alt="visual"></div>
+	</div>
+</div>
+<!-- visual (End) -->
+<!-- contents (Start) -->
+<div id="containar">
+	<div id="c_container">
+		<div id="contents" class="">
+			<div class="quick-menu2 sub">
+				<div class="con-box">
+					<a href="/index.php?mid=p_giving_alumni2" target="_blank">
+						<img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/main/banner_i_02.png" alt="Development fund" />
+						<p class="txt">Development<br/> fund</p>
+					</a>
+				</div>
+			</div>
+			<div class="quick-menu sub">
+				<div class="con-box">
+					<a href="https://physics.kaist.ac.kr/index.php?mid=p_aboutus5" target="_blank">
+						<img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/quick_recruit_en.jpg" alt="gogle" />
+					</a>
+				</div>
+			</div>
+			<div class="quick-menu3 sub">
+				<div class="con-box">
+					<a href="/index.php?mid=PhysicsCalendar">
+						<img src="https://physics.kaist.ac.kr/layouts/jit_layouts_2018/resource/images/quick_calendar.jpg" alt="gogle" />
+					</a>
+				</div>
+			</div>
+						<div id="snb">
+								<div class="nav-tit" >
+					소식				</div>				<ul class="nav">
+											<li  class="active"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1" >공지사항</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event2" >뉴스</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event3" >세미나</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event4" >채용</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event5" >예약</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event6" >뉴스레터</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=video_board" >Meet our Faculty</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=video_board2" >Meet our Students</a></li><li ><a href="https://physics.kaist.ac.kr/index.php?mid=PhysicsCalendar" >Physics Calendar</a></li>									</ul>			</div>
+			<div id="con_body">
+				<div id="con_head">
+															<h3 id="con_title"><span>공지사항</span></h3>										<ul id="con_nav">
+												<li>HOME</li>
+						<li>&gt;</li>
+						<li>소식</li>						<li>&gt;</li>
+						<li>공지사항</li>					</ul>				</div>
+				<div id="content">
+									<!-- 컨텐츠 표시1 -->
+					        <!--[if lte IE 9]>
+<script>
+jQuery(function($){
+	placeholder();
+});
+</script>
+<![endif]-->
+<!-- // 게시판 시작 // -->
+<div id="xet_board" class="">
+	
+	<!-- // header // -->
+	<div class="board-header">		
+		
+		<!-- // 상단 내용 // -->
+			
+			
+		<!-- // 게시판 제목, 부제목 // -->
+						
+				
+		<!-- 탭 스타일 카테고리(3차까지) 출력 -->
+					
+	
+	
+		<!-- 정렬 버튼 (추천순,조회순...) -->
+					
+	</div><div class="boardNavigation xet_clearfix mg-b15 visible-xs hidden-sm">
+	<div class="float_right">
+									</div></div><div class="boardListForm">
+	<table cellspacing="0" border="0" cellpadding="0" summary="List of Articles" class="boardList">
+		<thead class="hidden-xs">
+			<tr>
+								
+				<th scope="col">번호</th>																																																
+								<th scope="col">제목</th>																																												
+												<th scope="col"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;sort_index=regdate&amp;order_type=desc">날짜</a></th>																																								
+																																<th scope="col" class="hidden-xs"><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;sort_index=readed_count&amp;order_type=desc">조회 수</a></th>																							</tr>
+		</thead>		<tbody>
+			
+						
+			<tr>
+							
+				<td class="notice">
+										<span><i class="xi-announce xi-2x" title="공지"></i></span>				</td>																																															
+								<td class="title">
+					<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=17394" class="subject"><span style="font-weight:bold;">Physics Department Brochure (Eng.)_물리학과 영문 브로슈어</span></a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />															</td>																																											
+												<td class="date hidden-xs">2024-10-24</td>																																							
+																																<td class="reading hidden-xs">20808</td>																							</tr><tr>
+							
+				<td class="notice">
+										<span><i class="xi-announce xi-2x" title="공지"></i></span>				</td>																																															
+								<td class="title">
+					<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=13965" class="subject">개인정보처리방침</a>
+																																										</td>																																											
+												<td class="date hidden-xs">2022-11-28</td>																																							
+																																<td class="reading hidden-xs">49645</td>																							</tr><tr>
+							
+				<td class="notice">
+										<span><i class="xi-announce xi-2x" title="공지"></i></span>				</td>																																															
+								<td class="title">
+					<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=5688" class="subject">홈페이지 게시글을 핸드폰 등으로 쉽게 확인하는 법</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />															</td>																																											
+												<td class="date hidden-xs">2015-10-27</td>																																							
+																																<td class="reading hidden-xs">35486</td>																							</tr>			
+			<tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>629</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20467" class="subject">2026 가을학기 일반물리Ⅱ 학점인정시험 / 2026 Fall Semester Course Waiver Exam for General PhysicsⅡ</a>
+																																											<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-08-11						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-08-11</td>																												
+																																<td class="reading hidden-xs">667</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>628</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20395" class="subject">[연수학생 모집 안내] 기초과학연구원 중이온가속기연구소 연수학생 모집</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-07-12						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-07-12</td>																												
+																																<td class="reading hidden-xs">357</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>627</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20376" class="subject">양자과학기술 분야 글로벌 파트너십 연구 참여 대학원생 선발(07.01~07.15)</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-07-01						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-07-01</td>																												
+																																<td class="reading hidden-xs">491</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>626</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20263" class="subject">자연대/생명대 2026년 봄호 뉴스레터</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-05-29						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-05-29</td>																												
+																																<td class="reading hidden-xs">417</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>625</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20258" class="subject">2027봄 물리학과 대학원 입시설명회_2026.6.26(금) 오후 4시, 자연과학동 1323호 강의실</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-05-21						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-05-21</td>																												
+																																<td class="reading hidden-xs">2266</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>624</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20248" class="subject">제 6회 KAIST 광학그룹 학생 포스터 전시회 개최(05.27 Wed.)</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-05-13						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-05-13</td>																												
+																																<td class="reading hidden-xs">451</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>623</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20146" class="subject">양자과학기술 분야 글로벌 파트너십 연구 참여 대학원생 선발</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-04-16						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-04-16</td>																												
+																																<td class="reading hidden-xs">847</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>622</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=20140" class="subject">2026년 상반기 차담회 개최 (2026.5.6. 수 오후 4시, 물리학과 4층 옥상정원)</a>
+																																											<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-04-13						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-04-13</td>																												
+																																<td class="reading hidden-xs">622</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>621</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19941" class="subject">2026가을 물리학과 대학원 입시설명회_2026.3.20(금) 오후 4시, 자연과학동 1323호 강의실</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-03-03						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-03-03</td>																												
+																																<td class="reading hidden-xs">1430</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>620</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19887" class="subject">2026 봄학기 일반물리Ⅰ 학점인정시험 / 2026 Spring Semester Course Waiver Exam for General PhysicsⅠ(Updated 26.02.27)</a>
+																																											<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-02-10						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-02-10</td>																												
+																																<td class="reading hidden-xs">1226</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>619</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19782" class="subject">[학부 연구생 모집] 물리학과 전자구조연구실 (지도교수 김용관)에서 학부생을 모집합니다.</a>
+																																											<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2026-01-08						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2026-01-08</td>																												
+																																<td class="reading hidden-xs">1549</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>618</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19736" class="subject">자연대/생명대 2025년 가을호(23호) 뉴스레터</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-12-11						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-12-11</td>																												
+																																<td class="reading hidden-xs">1053</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>617</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19701" class="subject">물리학과 푸드트럭 이벤트 (12/10 수요일 2시-6시 캘포 앞)</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-12-08						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-12-08</td>																												
+																																<td class="reading hidden-xs">1080</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>616</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19658" class="subject">★한국물리학회 캐릭터 아이디어 공모전★ 개최 안내</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-12-04						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-12-04</td>																												
+																																<td class="reading hidden-xs">1158</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>615</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19516" class="subject">2025년 하반기 물리학과 차담회 안내_11/5(수) 4시 / 물리학과 4층 옥상 정원</a>
+																																											<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-11-03						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-11-03</td>																												
+																																<td class="reading hidden-xs">986</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>614</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19427" class="subject">2025년 가을학기 첫수융합포럼 안내 (의과학대학원X물리학과, 10/1(수) 12:00 창의관 101호) The First Wednesday Multidisciplinary Forum on October 1st, 2025</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-09-30						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-09-30</td>																												
+																																<td class="reading hidden-xs">1663</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>613</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19387" class="subject">[학부 연구생 모집] 박용근 교수 연구실(Biomedical Optics Lab.)</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-09-17						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-09-17</td>																												
+																																<td class="reading hidden-xs">9845</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>612</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19169" class="subject">2025 가을학기 일반물리Ⅱ 학점인정시험 / 2025 Fall Semester Course Waiver Exam for General PhysicsⅡ</a>
+																																											<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-08-18						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-08-18</td>																												
+																																<td class="reading hidden-xs">17854</td>																							</tr><tr class="bg1">
+			
+				
+								
+								
+				<td class="num">
+										<span>611</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19153" class="subject">[행사 안내] 2025 대한민국 청년총회 개최(8.23.토 10:30~17:30, KAIST 학술문화관 5층)</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-08-08						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-08-08</td>																												
+																																<td class="reading hidden-xs">17017</td>																							</tr><tr class="bg2">
+			
+				
+								
+								
+				<td class="num">
+										<span>610</span>				</td>																																																
+								<td class="title">
+					
+															<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;document_srl=19016" class="subject">[학부 연구생 모집] 물리학과 민범기 교수 연구실</a>
+																											<img src="https://physics.kaist.ac.kr/modules/document/tpl/icons//file.gif" alt="file" title="file" style="margin-right:2px;" />																<span class="visible-xs hidden-sm">
+						<i class="xi-time" title="날짜"></i> 2025-07-21						<i class="xi-user" title="작성자"></i> 					</span>
+				</td>																																												
+																								<td class="date hidden-xs">2025-07-21</td>																												
+																																<td class="reading hidden-xs">10303</td>																							</tr>		</tbody>
+	</table>
+</div>
+<ul class="pagination">
+	<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1" title="첫 페이지" class="prevEnd"><i class="xi-angle-double-left"></i><span>첫 페이지</span></a></li>
+	<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1" title="" class="prevEnd"><i class="xi-angle-left"></i></a></li>
+	<li>
+		<strong class="page_on">1</strong>			</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=2" class="page_no">2</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=3" class="page_no">3</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=4" class="page_no">4</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=5" class="page_no">5</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=6" class="page_no">6</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=7" class="page_no">7</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=8" class="page_no">8</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=9" class="page_no">9</a>	</li><li>
+				<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=10" class="page_no">10</a>	</li>		<li>
+		<a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=2" title="" class="nextEnd"><i class="xi-angle-right"></i></a>
+	</li>
+	<li><a href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&amp;page=32" title="끝 페이지" class="nextEnd"><i class="xi-angle-double-right"></i><span>끝 페이지</span></a></li>
+</ul>	
+<div class="boardNavigation">	
+	
+	<div class="float_left boardSearch">
+		<form action="https://physics.kaist.ac.kr/" method="get" onsubmit="return procFilter(this, search)" id="fo_search" class="boardSearchForm" ><input type="hidden" name="act" value="" />
+			<input type="hidden" name="vid" value="" />
+			<input type="hidden" name="mid" value="p_news_event1" />
+			<input type="hidden" name="category" value="" />
+			<div class="boardSearch">
+				<span class="l-r3">
+					<select name="search_target">
+						<option value="title_content">제목+내용</option><option value="title">제목</option><option value="content">내용</option><option value="comment">댓글</option><option value="user_name">이름</option><option value="nick_name">닉네임</option><option value="user_id">아이디</option><option value="tag">태그</option>					</select>
+				</span>					
+				<input type="text" name="search_keyword" value="" title="검색" class="inputText" accesskey="S" placeholder="검색" />		
+				<span class="search_btn_wrp r-r3">
+					<button type="submit" onclick="jQuery(this).parents('form#fo_search').submit();return false;" class="search_btn light"><i class="xi-magnifier"></i><span class="hidden-xs"> 검색</span></button>
+				</span>
+			</div>
+					</form>
+	</div>	
+	<div class="float_right">		
+													</div></div>	
+	<!-- // 하단 내용 // -->
+	</div><!-- board End -->
+<!-- // 게시판 끝 // -->				<!-- /컨텐츠 표시 -->
+				</div>
+			</div>
+					</div>
+	</div>
+</div>
+<!-- contents (End) -->
+	 	
+		
+	<!-- footer -->
+	<div id="footer">
+		<div class="con-area">
+			<div class="box li01">
+				<ul class="foo-info">
+					<li>Website suggestions and feedback</li>
+					<li><a target="_blank" href="https://physics.kaist.ac.kr/index.php?mid=p_news_event1&document_srl=13965">Privacy Policy//개인정보처리방침</a></li>
+					<!--<li>Email : kangys@kaist.ac.kr</li>-->
+				</ul>
+			</div>
+			<div class="box li02">
+				<ul class="address">
+					<li>Department of Physics, KAIST </li>
+					<li class="li">291 Daehak-ro, Yuseong-gu, Daejeon, Republic of Korea 34141</li>
+					<li>Copyright (C) 2018 KAIST, All Rights Reserved.</li>
+				</ul>
+			</div>
+		
+		</div>
+	</div>
+	<!-- // footer -->
+</div>
+<!-- ETC -->
+<div class="wfsr"></div>
+<script src="/addons/captcha/captcha.js?20180206112355"></script><script src="/files/cache/js_filter_compiled/d046d1841b9c79c545b82d3be892699d.ko.compiled.js?20240425160812"></script><script src="/files/cache/js_filter_compiled/1bdc15d63816408b99f674eb6a6ffcea.ko.compiled.js?20240425160812"></script><script src="/files/cache/js_filter_compiled/9b007ee9f2af763bb3d35e4fb16498e9.ko.compiled.js?20240425160812"></script><script src="/addons/autolink/autolink.js?20180206112355"></script><script src="/common/js/plugins/ui/jquery-ui.min.js?20180206112356"></script><script src="/common/js/plugins/ui/jquery.ui.datepicker-ko.js?20180206112356"></script><script src="/addons/resize_image/js/resize_image.js?20180206112355"></script></body>
+</html>
