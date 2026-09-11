@@ -186,3 +186,12 @@ test("resolveHref strips ;jsessionid", () => {
   const links = extractNoticeLinks(html, MATHSCI);
   assert.deepEqual(links, [{ url: "https://mathsci.kaist.ac.kr/ko/xe/notice/5?x=1", title: "세션 링크" }]);
 });
+
+import { fetchHtml } from "./notice-crawler";
+
+test("fetchHtml: network errors include the underlying cause code", async () => {
+  await assert.rejects(
+    () => fetchHtml("https://does-not-exist.invalid/"),
+    (err: Error) => /ENOTFOUND|EAI_AGAIN/.test(err.message),
+  );
+});

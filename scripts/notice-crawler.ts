@@ -161,6 +161,16 @@ export async function fetchHtml(url: string, timeoutMs = 15000): Promise<string>
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
     return await res.text();
+  } catch (err) {
+    // undici reports every network-level failure as a bare "fetch failed";
+    // the useful part (ENOTFOUND, EAI_AGAIN, ECONNRESET, CERT_HAS_EXPIRED…)
+    // lives in err.cause. Surface it so logs say what actually happened.
+    if (err instanceof Error && err.message === "fetch failed") {
+      const cause = err.cause as { code?: string; message?: string } | undefined;
+      const detail = cause?.code || cause?.message || "unknown cause";
+      throw new Error(`fetch failed (${detail}) for ${url}`, { cause: err });
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
