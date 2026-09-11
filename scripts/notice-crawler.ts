@@ -78,7 +78,9 @@ export function extractNoticeLinks(html: string, site: NoticeSite): NoticeLink[]
   return [...seen.values()];
 }
 
-const STRIP_SELECTOR = "script, style, noscript, nav, header, footer, iframe, form";
+// NOTE: <form> is deliberately NOT stripped — many Korean board CMSs wrap the
+// post body in a <form>, so stripping it throws the article away.
+const STRIP_SELECTOR = "script, style, noscript, nav, header, footer, iframe";
 const CONTENT_CANDIDATES = [
   "article",
   "main",
@@ -92,6 +94,21 @@ const CONTENT_CANDIDATES = [
   "body",
 ];
 const URL_REGEX = /https?:\/\/[^\s<>"')\]]+/g;
+
+/**
+ * Every absolute http(s) link on a page, in document order, deduped.
+ * Used to build the "site chrome" URL set from a board list page so that
+ * navigation links can be subtracted from a detail page's URL list.
+ */
+export function extractAllLinks(html: string, baseUrl: string): string[] {
+  const $ = cheerio.load(html);
+  const urls = new Set<string>();
+  $("a[href]").each((_, el) => {
+    const u = resolveHref($(el).attr("href"), baseUrl);
+    if (u) urls.add(u);
+  });
+  return [...urls];
+}
 
 /**
  * Reduce a detail page to plain text plus the absolute URLs it contains.

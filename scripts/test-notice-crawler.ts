@@ -5,7 +5,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "fs";
-import { extractNoticeLinks, type NoticeSite, extractNoticeText } from "./notice-crawler";
+import {
+  extractNoticeLinks,
+  type NoticeSite,
+  extractNoticeText,
+  extractAllLinks,
+} from "./notice-crawler";
 
 function fixture(name: string): string {
   return readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -62,9 +67,27 @@ test("extractNoticeText: mathsci detail returns substantial text without script 
   assert.ok(Array.isArray(urls));
 });
 
-test("extractNoticeText: physics detail returns substantial text", () => {
+test("extractNoticeText: physics detail includes the actual post body", () => {
   const { text } = extractNoticeText(fixture("physics-detail.html"), "https://physics.kaist.ac.kr/index.php?mid=p_news_event1");
   assert.ok(text.length >= 200, `text too short: ${text.length}`);
+  // Distinctive phrase from the notice body itself, not the surrounding nav.
+  assert.ok(text.includes("물리학과 홍보 브로슈어"), "post body missing from extracted text");
+});
+
+test("extractNoticeText: keeps a post body wrapped in a <form>", () => {
+  const html = `<html><body>
+    <nav><a href="/menu">메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴 메뉴</a></nav>
+    <div id="content">
+      <form name="boardForm" action="/view.do">
+        <h1>학과 공지 제목</h1>
+        <p>${"게시판 본문입니다. ".repeat(30)}</p>
+      </form>
+    </div>
+  </body></html>`;
+  const { text } = extractNoticeText(html, "https://cs.kaist.ac.kr/bbs/notice/1");
+  assert.ok(text.includes("학과 공지 제목"), "form-wrapped body was stripped");
+  assert.ok(text.includes("게시판 본문입니다."), "form-wrapped body was stripped");
+  assert.ok(!text.includes("메뉴 메뉴"), "nav leaked");
 });
 
 test("extractNoticeText: picks the largest content block, collects absolute urls", () => {
@@ -135,6 +158,27 @@ test("jsLink: ignores anchors whose id pattern does not match; plain hrefs still
     { url: "https://cs.kaist.ac.kr/bbs/notice/10", title: "공지 열" },
     { url: "https://cs.kaist.ac.kr/bbs/notice/12", title: "직접 링크" },
   ]);
+});
+
+test("extractAllLinks: absolute http(s) links only, deduped, in document order", () => {
+  const html = `
+    <a href="/ko/xe/notice/1">공지</a>
+    <a href="/ko/xe/notice/1">중복</a>
+    <a href="https://www.facebook.com/kaist">페이스북</a>
+    <a href="javascript:void(0)">자바스크립트</a>
+    <a href="mailto:a@b.com">메일</a>
+    <a href="#top">앵커</a>`;
+  const urls = extractAllLinks(html, "https://mathsci.kaist.ac.kr/ko/xe/notice/");
+  assert.deepEqual(urls, [
+    "https://mathsci.kaist.ac.kr/ko/xe/notice/1",
+    "https://www.facebook.com/kaist",
+  ]);
+});
+
+test("extractAllLinks: a real list page yields the site chrome links", () => {
+  const urls = extractAllLinks(fixture("mathsci-list.html"), MATHSCI.listUrl);
+  assert.ok(urls.length >= 20, `expected >=20 links, got ${urls.length}`);
+  for (const u of urls) assert.match(u, /^https?:\/\//);
 });
 
 test("resolveHref strips ;jsessionid", () => {
