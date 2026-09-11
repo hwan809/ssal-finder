@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "collect": "tsx collect.ts",
+    "crawl": "tsx crawl.ts",
+    "test": "tsx --test test-notice-crawler.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@supabase/supabase-js": "^2.49.4",
+    "cheerio": "^1.2.0",
     "imapflow": "^1.0.171",
     "mailparser": "^3.7.2"
   },
