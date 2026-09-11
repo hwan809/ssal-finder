@@ -109,11 +109,6 @@ export const SITES: NoticeSite[] = [
   },
 
   // ---- 공과대학 ----
-  {
-    dept: "기계공학과",
-    listUrl: "https://me.kaist.ac.kr/news/news_010100.html",
-    linkPattern: /^https:\/\/me\.kaist\.ac\.kr\/news\/news_010100\.html\?bmain=view&uid=\d+/,
-  },
   boardsCms("항공우주공학과", "ae.kaist.ac.kr", "board_notice"),
   {
     dept: "전기및전자공학부",
@@ -131,12 +126,6 @@ export const SITES: NoticeSite[] = [
     linkPattern: /^https:\/\/nuclear\.kaist\.ac\.kr\/board\/notice_view\.php\?k_id=\d+/,
   },
   wpSlugCms("반도체시스템공학과", "sse.kaist.ac.kr", "notice"),
-  {
-    dept: "김재철AI대학원",
-    listUrl: "https://gsai.kaist.ac.kr/notice/",
-    // post slugs live at the site root; require >= 3 hyphenated words to skip nav pages
-    linkPattern: /^https:\/\/gsai\.kaist\.ac\.kr\/(?!notice\/|page\/|category\/|tag\/|author\/)[a-z0-9]+(?:-[a-z0-9]+){2,}\/$/,
-  },
   readArticleCms("정보보호대학원", "gsis.kaist.ac.kr", "notice"),
   viewIdCms("인공지능반도체대학원", "aisemi.kaist.ac.kr", "notice"),
   viewIdCms("데이터사이언스대학원", "gsds.kaist.ac.kr", "news"),
@@ -183,6 +172,12 @@ export const SITES: NoticeSite[] = [
   },
 
   // Not crawled (verified 2026-09-11):
+  // - 기계공학과 me.kaist.ac.kr (/news/news_010100.html, ?bmain=view&uid=N) and
+  //   김재철AI대학원 gsai.kaist.ac.kr (/notice/, root-level slugs): both serve a
+  //   JavaScript cookie challenge ("자동등록방지 ... prove that you are human",
+  //   /cupid.js) to non-Korean IPs, so GitHub Actions runners get a 1 KB stub
+  //   with 0 links. They work from a Korean IP; re-add if the crawler ever runs
+  //   from one. Verified 2026-09-12 from ubuntu-latest.
   // - 산업디자인학과 id.kaist.ac.kr: React SPA, no server-rendered board.
   // - 융합인재학부 sts.kaist.ac.kr: board page has no post links.
   // - AI컴퓨팅학과 / AX학과 / AI시스템학과 / AI미래학과 (aicollege.kaist.ac.kr/<aic|ax|ais|fx>/notice):
