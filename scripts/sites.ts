@@ -62,13 +62,21 @@ function selectDocCms(dept: string, host: string, menuSeq: number, bbsSeq: numbe
 
 /** Helper for the /bbs/<board> CMS with javascript:readArticle used by cs, gsis */
 function readArticleCms(dept: string, host: string, board: string): NoticeSite {
+  // The board's onclick=readArticle(...) goes through an AJAX auth check that
+  // 302s to /board/view?bbs_id=<board>&bbs_sn=<id>&page=1&skey=subject&svalue=&menu=<n>.
+  // /bbs/<board>/<id> (a plausible-looking but wrong guess) returns a
+  // "잘못된 접근입니다" error page. menu must be a non-empty number but its
+  // value doesn't matter (verified against live cs/gsis boards 2026-09-11).
   return {
     dept,
     listUrl: `https://${host}/bbs/${board}`,
-    linkPattern: new RegExp(`^https://${host.replace(/\./g, "\\.")}/bbs/${board}/\\d+$`),
+    linkPattern: new RegExp(
+      `^https://${host.replace(/\./g, "\\.")}/board/view\\?bbs_id=${board}&bbs_sn=\\d+&page=1&skey=subject&svalue=&menu=1$`,
+    ),
     jsLink: {
       idPattern: new RegExp(`readArticle\\(\\s*'${board}'\\s*,\\s*'(\\d+)'`),
-      detailUrl: (id) => `https://${host}/bbs/${board}/${id}`,
+      detailUrl: (id) =>
+        `https://${host}/board/view?bbs_id=${board}&bbs_sn=${id}&page=1&skey=subject&svalue=&menu=1`,
     },
   };
 }
@@ -116,7 +124,6 @@ export const SITES: NoticeSite[] = [
   boardsCms("건설및환경공학과", "cee.kaist.ac.kr", "notice"),
   xeCms("바이오및뇌공학과", "bioeng.kaist.ac.kr", "bio_06_01"),
   viewIdCms("산업및시스템공학과", "ise.kaist.ac.kr", "notices"),
-  boardsCms("생명화학공학과", "cbe.kaist.ac.kr", "notices"),
   xeCms("신소재공학과", "mse.kaist.ac.kr", "mse_notice"),
   {
     dept: "원자력및양자공학과",
@@ -181,4 +188,6 @@ export const SITES: NoticeSite[] = [
   // - AI컴퓨팅학과 / AX학과 / AI시스템학과 / AI미래학과 (aicollege.kaist.ac.kr/<aic|ax|ais|fx>/notice):
   //   new departments with 0-1 posts; pattern is viewIdCms(dept, "aicollege.kaist.ac.kr", "<x>/notice") — add when they have posts.
   // - 사회적기업가MBA, 테크노경영MBA 등: covered by the 경영대학 board.
+  // - 생명화학공학과 cbe.kaist.ac.kr: TLS cert expired (CERT_HAS_EXPIRED) as of
+  //   2026-09-11 — not a sites.ts problem, re-add once the server's cert is renewed.
 ];
