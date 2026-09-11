@@ -87,6 +87,7 @@ async function findFuzzyMatch(
   supabase: SupabaseClient,
   title: string,
   startAt: string,
+  threshold: number,
 ): Promise<Record<string, unknown> | null> {
   // Derive the date portion (YYYY-MM-DD) from startAt
   const dayStart = startAt.slice(0, 10);
@@ -116,7 +117,7 @@ async function findFuzzyMatch(
     }
   }
 
-  if (bestScore > 0.7) {
+  if (bestScore > threshold) {
     console.log(
       `[db] Fuzzy match found (score=${bestScore.toFixed(2)}): ` +
         `"${title}" ~ "${(bestMatch as Record<string, unknown>).title}"`,
@@ -139,6 +140,7 @@ export async function upsertEvent(
   sourceType: "email" | "portal",
   formId?: string | null,
   formMapping?: FormMapping | null,
+  fuzzyThreshold: number = 0.7,
 ): Promise<UpsertResult> {
   if (!event.is_food_event || !event.title || !event.start_at) {
     return { action: "skipped" };
@@ -178,7 +180,7 @@ export async function upsertEvent(
 
   if (!existing) {
     // No exact hash match -- try fuzzy matching on same-day events
-    const fuzzyMatch = await findFuzzyMatch(supabase, event.title, event.start_at);
+    const fuzzyMatch = await findFuzzyMatch(supabase, event.title, event.start_at, fuzzyThreshold);
 
     if (fuzzyMatch) {
       // Treat as an update to the fuzzy-matched event
