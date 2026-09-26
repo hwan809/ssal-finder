@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { chat, LLM_MODEL } from "@/lib/openrouter";
 
 const SYSTEM_PROMPT = `Google 설문지의 모든 필드에 답변을 생성하세요.
 
@@ -27,9 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "eventId and profile.name required" }, { status: 400 });
     }
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (!anthropicKey) {
-      return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+    if (!process.env.OPENROUTER_API_KEY) {
+      return NextResponse.json({ error: "OPENROUTER_API_KEY not configured" }, { status: 500 });
     }
 
     const supabase = createClient(
@@ -123,24 +123,9 @@ ${fieldList}
 나머지 항목은 질문을 보고 적절한 답변을 생성해주세요.
 모든 entry ID에 대해 답변을 포함하세요.`;
 
-    // Step 3: Call Haiku
-    const llmRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      }),
-    });
-
-    const llmData = await llmRes.json();
-    const llmText = llmData.content?.[0]?.text || "";
+    // Step 3: Call LLM
+    const llm = await chat({ system: SYSTEM_PROMPT, user: userMessage, maxTokens: 1024 });
+    const llmText = llm.text;
 
     if (!llmText || llmText.trim() === "{}") {
       // Fallback: just use profile values for mapped fields
@@ -214,14 +199,12 @@ ${fieldList}
     });
 
     // Log LLM usage
-    const inputTokens = llmData.usage?.input_tokens || 0;
-    const outputTokens = llmData.usage?.output_tokens || 0;
     try {
       await supabase.from("llm_logs").insert({
-        model: "claude-haiku-4-5-20251001",
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        cost_usd: inputTokens * 0.8 / 1_000_000 + outputTokens * 4.0 / 1_000_000,
+        model: LLM_MODEL,
+        input_tokens: llm.inputTokens,
+        output_tokens: llm.outputTokens,
+        cost_usd: llm.costUsd,
         prompt_preview: userMessage.slice(0, 200),
         response_preview: llmText.slice(0, 500),
         purpose: "auto_register",

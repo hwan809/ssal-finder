@@ -7,7 +7,7 @@
  *   1. Fetch board list page, extract detail links + the page's chrome links
  *   2. Drop URLs already in crawled_notices
  *   3. Fetch each new detail page, reduce to text + body-only links
- *   4. Mask PII, classify with Claude Haiku (existing classifier)
+ *   4. Mask PII, classify with the LLM (existing classifier)
  *   5. Parse Google Forms, upsert food events (source_type = "portal")
  *   6. Record the site's classified URLs in crawled_notices in one write
  *
@@ -17,7 +17,7 @@
  *   npx tsx crawl.ts --site=전산     # only sites whose dept contains "전산"
  *
  * Environment variables (full run):
- *   ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
+ *   OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -379,8 +379,8 @@ async function main() {
     console.error("SUPABASE_URL / SUPABASE_SERVICE_KEY required for a full run.");
     process.exit(1);
   }
-  if (!args.dryRun && !process.env.ANTHROPIC_API_KEY) {
-    console.error("ANTHROPIC_API_KEY required for a full run.");
+  if (!args.dryRun && !process.env.OPENROUTER_API_KEY) {
+    console.error("OPENROUTER_API_KEY required for a full run.");
     process.exit(1);
   }
 

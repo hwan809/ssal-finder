@@ -6,7 +6,7 @@
  *   1. IMAP fetch (emails since last run)
  *   2. Privacy filter (discard personal emails)
  *   3. PII masking (before LLM)
- *   4. LLM classification (Claude Haiku)
+ *   4. LLM classification (OpenRouter)
  *   5. Google Forms parsing (if register_url points to a form)
  *   6. DB upsert (Supabase)
  *
@@ -18,7 +18,7 @@
  * Environment variables (all required):
  *   GMAIL_USER           – doorayhwan809@gmail.com
  *   GMAIL_APP_PASS       – Gmail App Password
- *   ANTHROPIC_API_KEY    – Claude API key
+ *   OPENROUTER_API_KEY   – OpenRouter API key
  *   SUPABASE_URL         – Supabase project URL
  *   SUPABASE_SERVICE_KEY – Supabase service_role key
  */

@@ -4,16 +4,15 @@
  * Given a Google Forms URL, this module:
  *   1. Fetches the form page HTML
  *   2. Extracts `entry.XXXXX` field IDs and their associated labels
- *   3. Uses Claude Haiku to map each label to a profile field
+ *   3. Uses the LLM to map each label to a profile field
  *      (name, student_id, department, email, phone)
  *   4. Returns a mapping: Record<entryId, profileField>
  *
  * Environment variables:
- *   ANTHROPIC_API_KEY – API key for Claude (shared with llm-classifier)
+ *   OPENROUTER_API_KEY – OpenRouter key (shared with llm-classifier)
  */
 
-// Dynamic import: only loaded when ANTHROPIC_API_KEY is set
-// import Anthropic from "@anthropic-ai/sdk";
+import { chat } from "../lib/openrouter";
 
 export interface FormField {
   entryId: string;
@@ -239,7 +238,7 @@ function parseFormHtml(html: string): FormField[] {
 
 /**
  * Heuristic keyword-based mapping of form field labels to profile fields.
- * Used as a fallback when ANTHROPIC_API_KEY is not available.
+ * Used as a fallback when OPENROUTER_API_KEY is not available.
  */
 function heuristicMapFields(fields: FormField[]): FormMapping {
   const patterns: Array<{ field: ProfileField; keywords: RegExp }> = [
@@ -269,22 +268,18 @@ function heuristicMapFields(fields: FormField[]): FormMapping {
 }
 
 /**
- * Use Claude Haiku to map form field labels to profile fields.
- * Falls back to heuristic keyword matching when ANTHROPIC_API_KEY is not set.
+ * Use the LLM to map form field labels to profile fields.
+ * Falls back to heuristic keyword matching when OPENROUTER_API_KEY is not set.
  */
 export async function mapFieldsToProfile(
   fields: FormField[],
 ): Promise<FormMapping> {
   if (fields.length === 0) return {};
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.warn("[form-parser] ANTHROPIC_API_KEY not set, using heuristic mapping.");
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn("[form-parser] OPENROUTER_API_KEY not set, using heuristic mapping.");
     return heuristicMapFields(fields);
   }
-
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey });
 
   const fieldList = fields
     .map((f) => `- ${f.entryId}: "${f.label}"`)
@@ -303,26 +298,11 @@ export async function mapFieldsToProfile(
 
 반드시 유효한 JSON 객체만 출력하세요. 키는 entry ID (예: "entry.123456"), 값은 프로필 필드명 또는 null.`;
 
-  const response = await client.messages.create({
-    model: "claude-haiku-4-20250414",
-    max_tokens: 512,
+  const { text } = await chat({
     system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: `다음 설문지 필드를 매핑해주세요:\n\n${fieldList}`,
-      },
-    ],
+    user: `다음 설문지 필드를 매핑해주세요:\n\n${fieldList}`,
+    maxTokens: 512,
   });
-
-  const text =
-    response.content
-      .filter((block) => block.type === "text")
-      .map((block) => {
-        if (block.type === "text") return block.text;
-        return "";
-      })
-      .join("") || "";
 
   // Extract JSON from response
   const jsonMatch =

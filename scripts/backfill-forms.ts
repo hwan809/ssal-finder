@@ -10,7 +10,7 @@
  * Environment variables:
  *   SUPABASE_URL         – Supabase project URL
  *   SUPABASE_SERVICE_KEY – service_role key
- *   ANTHROPIC_API_KEY    – API key for Claude (used by form-parser LLM step)
+ *   OPENROUTER_API_KEY   – OpenRouter key (used by form-parser LLM step)
  */
 
 import { createClient } from "@supabase/supabase-js";
