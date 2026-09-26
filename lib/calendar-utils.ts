@@ -28,16 +28,22 @@ export function formatDate(iso: string): string {
   return S.DATE_FORMAT(d.getFullYear(), d.getMonth() + 1, d.getDate(), S.DAYS[d.getDay()], hh, mm);
 }
 
+// 서버(UTC)와 브라우저가 같은 결과를 내야 하는 곳(SSR, OG 이미지)은 KST로 고정한다.
+// getUTC*로 읽으면 KST 벽시계 값이 된다.
+function kst(iso: string): Date {
+  return new Date(new Date(iso).getTime() + 9 * 3600000);
+}
+
 export function formatDateLong(iso: string): string {
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return S.DATE_FORMAT_LONG(d.getFullYear(), d.getMonth() + 1, d.getDate(), S.DAYS[d.getDay()], hh, mm);
+  const d = kst(iso);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return S.DATE_FORMAT_LONG(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), S.DAYS[d.getUTCDay()], hh, mm);
 }
 
 export function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const d = kst(iso);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 export function timeAgo(iso: string): string {
@@ -82,4 +88,11 @@ export function shortFoodName(foodNote: string | null, foodType: string): string
     if (re.test(foodNote)) return name;
   }
   return foodType === "기타" ? "음식" : foodType;
+}
+
+export function formatDateKst(iso: string): string {
+  const d = kst(iso);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${S.DAYS[d.getUTCDay()]}) ${hh}:${mm}`;
 }

@@ -34,6 +34,10 @@ export const S = {
   DETAIL_REGISTER_CTA: "신청하기 →",
   DETAIL_GOOGLE_CAL: "Google 캘린더에 추가",
   DETAIL_ICS: ".ics 다운로드",
+  DETAIL_SHARE: "친구에게 공유하기",
+  DETAIL_SHARE_COPIED: "링크를 복사했어요",
+  DETAIL_SHARE_FAIL: "공유에 실패했어요",
+  SHARE_HEADLINE: (food: string) => `${food} 쌀먹할 사람?`,
 
   // 피드
   FEED_ACTION_ADDED: "추가됨",
