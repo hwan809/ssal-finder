@@ -58,11 +58,13 @@ function computeSourceHash(title: string, startAt: string): string {
 
 /**
  * Normalize a title for fuzzy comparison by stripping bracketed tags,
+ * parenthesized subtitles (the LLM adds or drops them between runs),
  * common re-announcement prefixes, and collapsing whitespace.
  */
-function normalizeTitle(title: string): string {
+export function normalizeTitle(title: string): string {
   return title
     .replace(/\[.*?\]/g, "")
+    .replace(/\(.*?\)/g, "")
     .replace(/^(RE:|FW:|재안내|리마인더|Reminder)\s*/gi, "")
     .replace(/\s+/g, " ")
     .trim()
@@ -74,7 +76,7 @@ function normalizeTitle(title: string): string {
  * Uses normalized forms: exact match = 1, substring containment = 0.9,
  * otherwise falls back to character-set overlap ratio.
  */
-function titleSimilarity(a: string, b: string): number {
+export function titleSimilarity(a: string, b: string): number {
   const na = normalizeTitle(a);
   const nb = normalizeTitle(b);
   if (na === nb) return 1;

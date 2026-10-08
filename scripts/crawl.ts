@@ -49,6 +49,12 @@ const MAX_BODY_CHARS = 6000;
 const CLASSIFY_CONCURRENCY = 5;
 /** Crawled events dedup on containment / exact title only, unlike mail (0.7). */
 const CRAWL_FUZZY_THRESHOLD = 0.9;
+/**
+ * --rescan reads every notice on page 1 back to back; after ~85 quick requests
+ * the shared *.kaist.ac.kr firewall stopped accepting connections from the
+ * runner. Normal runs fetch a handful of pages and need no gap.
+ */
+const RESCAN_REQUEST_GAP_MS = 2000;
 
 const USAGE = `Usage: npx tsx crawl.ts [--dry-run] [--rescan] [--site=<dept substring>]`;
 
@@ -119,6 +125,11 @@ function parseArgs(argv: string[]): Args {
   }
 
   return { dryRun, rescan, site };
+}
+
+async function politeFetch(url: string, args: Args): Promise<string> {
+  if (args.rescan) await new Promise((r) => setTimeout(r, RESCAN_REQUEST_GAP_MS));
+  return fetchHtml(url);
 }
 
 let _supabase: SupabaseClient | null = null;
@@ -261,7 +272,7 @@ async function processSite(site: NoticeSite, args: Args, summary: Summary): Prom
   let listHtml: string;
   let links: NoticeLink[];
   try {
-    listHtml = await fetchHtml(site.listUrl);
+    listHtml = await politeFetch(site.listUrl, args);
     links = extractNoticeLinks(listHtml, site).slice(0, MAX_LINKS_PER_SITE);
   } catch (err) {
     console.warn(`[crawl] ${site.dept}: list fetch failed — ${(err as Error).message}`);
@@ -287,7 +298,7 @@ async function processSite(site: NoticeSite, args: Args, summary: Summary): Prom
   const rows: NoticeRow[] = [];
   for (const link of fresh) {
     try {
-      const html = await fetchHtml(link.url);
+      const html = await politeFetch(link.url, args);
       const { text, urls } = extractNoticeText(html, link.url);
       const notice = { site, link, text, urls: selectNoticeUrls(urls, chromeUrls) };
       notices.push(notice);

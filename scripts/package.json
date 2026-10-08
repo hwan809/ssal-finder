@@ -6,7 +6,7 @@
   "scripts": {
     "collect": "tsx collect.ts",
     "crawl": "tsx crawl.ts",
-    "test": "tsx --test test-notice-crawler.ts test-llm-classifier.ts",
+    "test": "tsx --test test-notice-crawler.ts test-llm-classifier.ts test-db-upserter.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
