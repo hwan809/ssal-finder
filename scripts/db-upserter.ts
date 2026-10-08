@@ -14,6 +14,13 @@ import { createHash } from "crypto";
 import type { ClassifiedEvent, LLMUsage } from "./llm-classifier";
 import type { FormMapping } from "./form-parser";
 
+export interface UpsertOptions {
+  /** Backfill: only add new events, never touch existing ones (keeps the feed quiet). */
+  insertOnly?: boolean;
+  /** Backfill: skip events that start before this time. */
+  skipBefore?: Date;
+}
+
 export interface UpsertResult {
   action: "added" | "updated" | "skipped";
   eventId?: string;
@@ -141,8 +148,13 @@ export async function upsertEvent(
   formId?: string | null,
   formMapping?: FormMapping | null,
   fuzzyThreshold: number = 0.7,
+  options: UpsertOptions = {},
 ): Promise<UpsertResult> {
   if (!event.is_event || !event.title || !event.start_at) {
+    return { action: "skipped" };
+  }
+  if (options.skipBefore && new Date(event.start_at) < options.skipBefore) {
+    console.log(`[db] Skipped (already past): "${event.title}"`);
     return { action: "skipped" };
   }
 
@@ -183,6 +195,11 @@ export async function upsertEvent(
   if (!existing) {
     // No exact hash match -- try fuzzy matching on same-day events
     const fuzzyMatch = await findFuzzyMatch(supabase, event.title, event.start_at, fuzzyThreshold);
+
+    if (fuzzyMatch && options.insertOnly) {
+      console.log(`[db] Skipped (exists, insert-only): "${event.title}"`);
+      return { action: "skipped", eventId: fuzzyMatch.id as string };
+    }
 
     if (fuzzyMatch) {
       // Treat as an update to the fuzzy-matched event
@@ -230,6 +247,11 @@ export async function upsertEvent(
 
     console.log(`[db] Added event: "${event.title}" (${inserted.id})`);
     return { action: "added", eventId: inserted.id };
+  }
+
+  if (options.insertOnly) {
+    console.log(`[db] Skipped (exists, insert-only): "${event.title}"`);
+    return { action: "skipped", eventId: existing.id };
   }
 
   // Compare fields and build diff

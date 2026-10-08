@@ -50,10 +50,12 @@ const CLASSIFY_CONCURRENCY = 5;
 /** Crawled events dedup on containment / exact title only, unlike mail (0.7). */
 const CRAWL_FUZZY_THRESHOLD = 0.9;
 
-const USAGE = `Usage: npx tsx crawl.ts [--dry-run] [--site=<dept substring>]`;
+const USAGE = `Usage: npx tsx crawl.ts [--dry-run] [--rescan] [--site=<dept substring>]`;
 
 interface Args {
   dryRun: boolean;
+  /** Re-classify notices recorded as non-food; insert-only, future events only. */
+  rescan: boolean;
   site: string | null;
 }
 
@@ -93,11 +95,14 @@ interface Summary {
 
 function parseArgs(argv: string[]): Args {
   let dryRun = false;
+  let rescan = false;
   let site: string | null = null;
 
   for (const arg of argv) {
     if (arg === "--dry-run") {
       dryRun = true;
+    } else if (arg === "--rescan") {
+      rescan = true;
     } else if (arg.startsWith("--site=")) {
       const value = arg.slice("--site=".length).trim();
       if (!value) {
@@ -113,7 +118,7 @@ function parseArgs(argv: string[]): Args {
     }
   }
 
-  return { dryRun, site };
+  return { dryRun, rescan, site };
 }
 
 let _supabase: SupabaseClient | null = null;
@@ -130,17 +135,23 @@ function getSupabase(): SupabaseClient | null {
 const formCache = new Map<string, { formId: string | null; mapping: FormMapping }>();
 
 /** Return the subset of urls that are NOT yet in crawled_notices. */
-async function filterUnseen(urls: string[]): Promise<string[]> {
+/**
+ * Drop URLs already in crawled_notices. With `rescan`, notices recorded as
+ * non-food come back: before 행사모음 they were discarded without a second look.
+ */
+async function filterUnseen(urls: string[], rescan = false): Promise<string[]> {
   const supabase = getSupabase();
   if (!supabase || urls.length === 0) return urls;
   const { data, error } = await supabase
     .from("crawled_notices")
-    .select("url")
+    .select("url, is_food_event")
     .in("url", urls);
   if (error) {
     throw new Error(`crawled_notices query failed: ${error.message}`);
   }
-  const seen = new Set((data || []).map((r) => r.url as string));
+  const seen = new Set(
+    (data || []).filter((r) => !rescan || r.is_food_event).map((r) => r.url as string),
+  );
   return urls.filter((u) => !seen.has(u));
 }
 
@@ -266,7 +277,7 @@ async function processSite(site: NoticeSite, args: Args, summary: Summary): Prom
   summary.links += links.length;
 
   const chromeUrls = new Set(extractAllLinks(listHtml, site.listUrl));
-  const unseenUrls = new Set(await filterUnseen(links.map((l) => l.url)));
+  const unseenUrls = new Set(await filterUnseen(links.map((l) => l.url), args.rescan));
   const fresh = links.filter((l) => unseenUrls.has(l.url));
   summary.fresh += fresh.length;
   console.log(`[crawl] ${site.dept}: links=${links.length} new=${fresh.length}`);
@@ -345,6 +356,7 @@ async function processSite(site: NoticeSite, args: Args, summary: Summary): Prom
         formData?.formId,
         formData?.mapping,
         CRAWL_FUZZY_THRESHOLD,
+        args.rescan ? { insertOnly: true, skipBefore: new Date() } : {},
       );
       eventIdByUrl.set(notice.link.url, result.eventId ?? null);
       if (result.action === "added") summary.added++;

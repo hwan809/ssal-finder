@@ -253,9 +253,9 @@ with open(output_file, "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False)
 `;
 
-export async function fetchEmailsSince(sinceDate: Date): Promise<FetchedEmail[]> {
+export async function fetchEmailsSince(sinceDate: Date, maxEmails = 50): Promise<FetchedEmail[]> {
   // Combined: headers (batch) + bodies (BODY.PEEK[1] per UID) in one IMAP session
-  const raw = await runPython(COMBINED_SCRIPT, [sinceDate.toISOString(), "", "50"]);
+  const raw = await runPython(COMBINED_SCRIPT, [sinceDate.toISOString(), "", String(maxEmails)]);
   const data = JSON.parse(raw) as Array<{
     uid: number; subject: string; from: string; to: string[]; date: string; body: string;
   }>;

@@ -9,11 +9,16 @@ on:
         description: 'Scan emails since date (YYYY-MM-DD). Leave empty for auto.'
         required: false
         default: ''
+      backfill:
+        description: 'Re-scan old mail (needs since) and every board notice for missed events. Insert-only.'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,7 +29,9 @@ jobs:
       - name: Run collection
         run: |
           cd scripts
-          if [ -n "${{ inputs.since }}" ]; then
+          if [ "${{ inputs.backfill }}" = "true" ]; then
+            npx tsx collect.ts --since=${{ inputs.since }} --backfill --max=3000
+          elif [ -n "${{ inputs.since }}" ]; then
             npx tsx collect.ts --since=${{ inputs.since }}
           else
             npx tsx collect.ts
@@ -46,7 +53,13 @@ jobs:
       - name: Install dependencies
         run: cd scripts && npm ci
       - name: Crawl department notice boards
-        run: cd scripts && npx tsx crawl.ts
+        run: |
+          cd scripts
+          if [ "${{ inputs.backfill }}" = "true" ]; then
+            npx tsx crawl.ts --rescan
+          else
+            npx tsx crawl.ts
+          fi
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

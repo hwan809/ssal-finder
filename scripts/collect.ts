@@ -38,10 +38,22 @@ async function main() {
   // Determine "since" date
   let sinceDate: Date;
 
-  const sinceArg = process.argv.find((arg) => arg.startsWith("--since="));
-  if (sinceArg) {
-    sinceDate = new Date(sinceArg.split("=")[1]);
+  // --backfill: re-read old mail for events the food-only classifier dropped.
+  // Insert-only and future-only, so re-running it is harmless.
+  const backfill = process.argv.includes("--backfill");
+  const maxArg = process.argv.find((arg) => arg.startsWith("--max="));
+  const maxEmails = maxArg ? Number(maxArg.split("=")[1]) : 50;
+  const upsertOptions = backfill ? { insertOnly: true, skipBefore: new Date() } : {};
+  if (backfill) console.log(`Backfill mode: insert-only, future events only, max ${maxEmails} emails`);
+
+  const sinceValue = process.argv.find((arg) => arg.startsWith("--since="))?.split("=")[1];
+  if (sinceValue) {
+    sinceDate = new Date(sinceValue);
     console.log(`Using --since override: ${sinceDate.toISOString()}`);
+  } else if (backfill) {
+    // Announcements for still-upcoming events rarely go out more than ~6 weeks ahead
+    sinceDate = new Date(Date.now() - 45 * 86400000);
+    console.log(`Backfill default window: ${sinceDate.toISOString()}`);
   } else {
     sinceDate = await getLastCollectionTime();
     console.log(`Last collection: ${sinceDate.toISOString()}`);
@@ -53,7 +65,7 @@ async function main() {
   console.log("\n--- Step 1: Fetching emails from IMAP ---");
   let emails: FetchedEmail[];
   try {
-    emails = await fetchEmailsSince(sinceDate);
+    emails = await fetchEmailsSince(sinceDate, maxEmails);
   } catch (err) {
     console.error("IMAP fetch failed:", err);
     process.exit(1);
@@ -204,6 +216,8 @@ async function main() {
         "email",
         formData?.formId,
         formData?.mapping,
+        undefined,
+        upsertOptions,
       );
 
       switch (result.action) {
