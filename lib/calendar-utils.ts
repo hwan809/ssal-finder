@@ -13,10 +13,12 @@ export function googleCalendarUrl(event: Event): string {
     : fmt(new Date(new Date(event.start_at).getTime() + 3600000).toISOString());
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: `${S.CALENDAR_PREFIX} ${event.title}`,
+    text: event.is_food !== false ? `${S.CALENDAR_PREFIX} ${event.title}` : event.title,
     dates: `${start}/${end}`,
     location: event.location || "",
-    details: `${event.food_note || event.food_type}\n${event.description || ""}`.trim(),
+    details: [event.is_food !== false && (event.food_note || event.food_type), event.description]
+      .filter(Boolean)
+      .join("\n"),
   });
   return `https://calendar.google.com/calendar/render?${params}`;
 }
@@ -81,7 +83,8 @@ const FOOD_KEYWORDS: [RegExp, string][] = [
   [/상품권/i, "상품권"],
 ];
 
-export function shortFoodName(foodNote: string | null, foodType: string): string {
+export function shortFoodName(foodNote: string | null, foodType: string | null): string {
+  foodType ??= "기타";
   if (!foodNote) return foodType === "기타" ? "음식" : foodType;
   if (foodNote.length <= 8) return foodNote;
   for (const [re, name] of FOOD_KEYWORDS) {

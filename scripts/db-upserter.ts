@@ -142,7 +142,7 @@ export async function upsertEvent(
   formMapping?: FormMapping | null,
   fuzzyThreshold: number = 0.7,
 ): Promise<UpsertResult> {
-  if (!event.is_food_event || !event.title || !event.start_at) {
+  if (!event.is_event || !event.title || !event.start_at) {
     return { action: "skipped" };
   }
 
@@ -166,8 +166,10 @@ export async function upsertEvent(
     start_at: event.start_at,
     end_at: event.end_at || null,
     location: event.location || null,
-    food_type: event.food_type || "기타",
-    food_note: event.food_note || null,
+    is_food: event.is_food_event,
+    category: event.category || null,
+    food_type: event.is_food_event ? event.food_type || "기타" : null,
+    food_note: event.is_food_event ? event.food_note || null : null,
     target_audience: event.target_audience || null,
     register_url: event.register_url || null,
     source_type: sourceType,
@@ -184,6 +186,7 @@ export async function upsertEvent(
 
     if (fuzzyMatch) {
       // Treat as an update to the fuzzy-matched event
+      keepFoodInfo(fuzzyMatch, newRow);
       const diff = buildDiff(fuzzyMatch, newRow);
 
       if (Object.keys(diff).length === 0) {
@@ -230,6 +233,7 @@ export async function upsertEvent(
   }
 
   // Compare fields and build diff
+  keepFoodInfo(existing, newRow);
   const diff = buildDiff(existing, newRow);
 
   if (Object.keys(diff).length === 0) {
@@ -252,6 +256,21 @@ export async function upsertEvent(
 
   console.log(`[db] Updated event: "${event.title}" (${existing.id})`, diff);
   return { action: "updated", eventId: existing.id, diff };
+}
+
+/**
+ * A reminder mail or board repost often omits the food. Once an event is known
+ * to serve food, a later non-food classification must not erase that.
+ */
+function keepFoodInfo(
+  existing: Record<string, unknown>,
+  incoming: { is_food: boolean; food_type: string | null; food_note: string | null },
+): void {
+  if (existing.is_food !== false && !incoming.is_food) {
+    incoming.is_food = true;
+    incoming.food_type = (existing.food_type as string | null) ?? "기타";
+    incoming.food_note = (existing.food_note as string | null) ?? null;
+  }
 }
 
 /**
@@ -290,6 +309,8 @@ function buildDiff(
     "start_at",
     "end_at",
     "location",
+    "is_food",
+    // category is not compared: backfilling it on old rows would flood the feed
     "food_type",
     "food_note",
     "target_audience",

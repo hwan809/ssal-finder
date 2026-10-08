@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getProfile } from "@/lib/auto-register";
-import { FOOD_ICONS } from "@/lib/colors";
+import { eventIcon } from "@/lib/event-display";
 import { formatDate } from "@/lib/calendar-utils";
 import { Header } from "@/components/layout/header";
-import type { FoodType } from "@/lib/types";
+import type { EventCategory, FoodType } from "@/lib/types";
 
 interface Registration {
   id: string;
@@ -17,7 +17,9 @@ interface Registration {
   created_at: string;
   event?: {
     title: string;
-    food_type: FoodType;
+    is_food: boolean;
+    category: EventCategory | null;
+    food_type: FoodType | null;
     food_note: string | null;
     start_at: string;
     location: string | null;
@@ -31,7 +33,9 @@ interface Attendance {
   created_at: string;
   event?: {
     title: string;
-    food_type: FoodType;
+    is_food: boolean;
+    category: EventCategory | null;
+    food_type: FoodType | null;
     food_note: string | null;
     start_at: string;
     location: string | null;
@@ -49,14 +53,14 @@ export default function MyEventsPage() {
 
     supabase
       .from("registrations")
-      .select("*, event:events(title, food_type, food_note, start_at, location)")
+      .select("*, event:events(*)")
       .eq("profile_name", profile.name)
       .order("created_at", { ascending: false })
       .then(({ data }) => { if (data) setRegistrations(data); });
 
     supabase
       .from("attendees")
-      .select("*, event:events(title, food_type, food_note, start_at, location)")
+      .select("*, event:events(*)")
       .eq("nickname", profile.name)
       .order("created_at", { ascending: false })
       .then(({ data }) => { if (data) setAttendances(data); });
@@ -106,7 +110,7 @@ export default function MyEventsPage() {
                   className="flex items-center gap-3 active:opacity-60"
                 >
                   <span className="emoji text-[22px] shrink-0">
-                    {reg.event ? FOOD_ICONS[reg.event.food_type] : "📋"}
+                    {reg.event ? eventIcon(reg.event) : "📋"}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-[14px] font-bold" style={{ letterSpacing: "-0.01em" }}>
@@ -166,7 +170,7 @@ export default function MyEventsPage() {
                 style={{ borderTop: "1px solid var(--g9)" }}
               >
                 <span className="emoji text-[22px] shrink-0">
-                  {att.event ? FOOD_ICONS[att.event.food_type] : "🙋"}
+                  {att.event ? eventIcon(att.event) : "🙋"}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="text-[14px] font-bold" style={{ letterSpacing: "-0.01em" }}>

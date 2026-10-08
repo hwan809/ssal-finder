@@ -2,8 +2,8 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getEvent } from "@/lib/events";
-import { FOOD_ICONS } from "@/lib/colors";
-import { formatDateKst, shortFoodName } from "@/lib/calendar-utils";
+import { formatDateKst } from "@/lib/calendar-utils";
+import { eventIcon, shareHeadline } from "@/lib/event-display";
 import { S } from "@/lib/strings";
 
 export const alt = S.APP_NAME;
@@ -39,8 +39,8 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         {event ? (
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "center", fontSize: 88, fontWeight: 900, letterSpacing: "-0.03em" }}>
-              <span style={{ marginRight: 24 }}>{FOOD_ICONS[event.food_type]}</span>
-              {S.SHARE_HEADLINE(shortFoodName(event.food_note, event.food_type))}
+              <span style={{ marginRight: 24 }}>{eventIcon(event)}</span>
+              {shareHeadline(event)}
             </div>
             <div style={{ display: "flex", marginTop: 28, fontSize: 48, fontWeight: 700, color: "#000" }}>
               {formatDateKst(event.start_at)}

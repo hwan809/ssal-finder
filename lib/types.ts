@@ -4,7 +4,9 @@ export interface Event {
   start_at: string;
   end_at: string | null;
   location: string | null;
-  food_type: FoodType;
+  is_food: boolean;
+  category: EventCategory | null;
+  food_type: FoodType | null;
   food_note: string | null;
   target_audience: string | null;
   register_url: string | null;
@@ -23,7 +25,7 @@ export interface UpdateLog {
   action: "added" | "updated" | "removed";
   diff: Record<string, unknown> | null;
   created_at: string;
-  event?: { title: string; food_type: string } | null;
+  event?: Pick<Event, "title" | "is_food" | "category" | "food_type"> | null;
 }
 
 export type FoodType =
@@ -33,6 +35,13 @@ export type FoodType =
   | "간식"
   | "식사"
   | "기타";
+
+export type EventCategory = "세미나" | "설명회" | "대회" | "문화" | "기타";
+
+export const EVENT_CATEGORIES: EventCategory[] = ["세미나", "설명회", "대회", "문화", "기타"];
+
+/** 쌀먹찾기(음식 행사만) / 행사모음(전체) */
+export type Mode = "food" | "all";
 
 export interface Submission {
   id: string;

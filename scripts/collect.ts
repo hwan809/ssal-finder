@@ -124,28 +124,33 @@ async function main() {
 
   const classifications = await classifyEmails(maskedItems);
 
-  const foodEvents: Array<{
+  const events: Array<{
     classification: ClassifiedEvent;
     originalEmail: FetchedEmail;
   }> = [];
 
   for (let i = 0; i < classifications.length; i++) {
     const cls = classifications[i];
-    if (cls.is_food_event) {
-      foodEvents.push({
+    if (cls.is_event) {
+      events.push({
         classification: cls,
         originalEmail: filtered[i],
       });
-      console.log(`  Food event: "${cls.title}" (${cls.food_type})`);
+      if (cls.is_food_event) {
+        console.log(`  Food event: "${cls.title}" (${cls.food_type})`);
+      } else {
+        console.log(`  Event: "${cls.title}" (${cls.category})`);
+      }
     } else {
-      console.log(`  Not food: "${filtered[i].subject}"`);
+      console.log(`  Not event: "${filtered[i].subject}"`);
     }
   }
 
-  console.log(`Food events found: ${foodEvents.length}`);
+  const foodCount = events.filter((e) => e.classification.is_food_event).length;
+  console.log(`Events found: ${events.length} (food ${foodCount})`);
 
-  if (foodEvents.length === 0) {
-    console.log("No food events found. Exiting.");
+  if (events.length === 0) {
+    console.log("No events found. Exiting.");
     return;
   }
 
@@ -158,7 +163,9 @@ async function main() {
     { formId: string | null; mapping: FormMapping }
   >();
 
-  for (const { classification } of foodEvents) {
+  // Auto-register is a food-mode feature; skip forms for non-food events.
+  for (const { classification } of events) {
+    if (!classification.is_food_event) continue;
     const url = classification.register_url;
     if (!url) continue;
     // Accept Google Forms URLs (full or short)
@@ -186,7 +193,7 @@ async function main() {
   let updated = 0;
   let skipped = 0;
 
-  for (const { classification } of foodEvents) {
+  for (const { classification } of events) {
     const url = classification.register_url;
     const formId = url ? extractFormId(url) : null;
     const formData = formId ? formCache.get(formId) : (url ? formCache.get(url) : null);
@@ -230,7 +237,8 @@ async function main() {
   console.log("\n=== Pipeline complete ===");
   console.log(`  Emails fetched:  ${emails.length}`);
   console.log(`  Privacy passed:  ${filtered.length}`);
-  console.log(`  Food events:     ${foodEvents.length}`);
+  console.log(`  Food events:     ${foodCount}`);
+  console.log(`  Other events:    ${events.length - foodCount}`);
   console.log(`  DB added:        ${added}`);
   console.log(`  DB updated:      ${updated}`);
   console.log(`  DB skipped:      ${skipped}`);

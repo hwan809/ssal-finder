@@ -3,6 +3,9 @@ export const S = {
   APP_NAME: "카이스트 쌀먹찾기",
   APP_DESC: "KAIST에서 밥 주는 행사만 모아보는 서비스",
   APP_SHORT: "쌀먹찾기",
+  MODE_TITLE: { food: "카이스트 쌀먹찾기", all: "카이스트 행사모음" },
+  MODE_ICON: { food: "🍚", all: "📅" },
+  MODE_TOGGLE_LABEL: { food: "행사모음으로 전환", all: "쌀먹찾기로 전환" },
   CALENDAR_PREFIX: "[쌀먹]",
 
   // 랜딩
@@ -38,6 +41,7 @@ export const S = {
   DETAIL_SHARE_COPIED: "링크를 복사했어요",
   DETAIL_SHARE_FAIL: "공유에 실패했어요",
   SHARE_HEADLINE: (food: string) => `${food} 쌀먹할 사람?`,
+  SHARE_HEADLINE_EVENT: (title: string) => `${title} 같이 갈 사람?`,
 
   // 피드
   FEED_ACTION_ADDED: "추가됨",
@@ -112,6 +116,10 @@ export const S = {
   REC_TOMORROW_MEAL: (food: string) => `내일 점심,\n${food} 어때요?`,
   REC_EMPTY_WEEK: "아 쌀먹 좀 하자...",
   REC_NEXT_EVENT: (dateStr: string) => `다음 밥은 ${dateStr}!`,
+  REC_ALL_TODAY: (n: number) => `오늘 행사 ${n}개`,
+  REC_ALL_TOMORROW: (n: number) => `내일 행사 ${n}개`,
+  REC_ALL_WEEK: (n: number) => `이번 주 행사 ${n}개`,
+  REC_ALL_EMPTY: "이번 주는 조용하네요",
 
   // 음식 타입
   FOOD_TYPES: {

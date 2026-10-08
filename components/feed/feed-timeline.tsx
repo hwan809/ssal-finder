@@ -1,5 +1,5 @@
-import type { UpdateLog, FoodType } from "@/lib/types";
-import { FOOD_ICONS } from "@/lib/colors";
+import type { UpdateLog } from "@/lib/types";
+import { eventIcon, isFood } from "@/lib/event-display";
 import { timeAgo } from "@/lib/calendar-utils";
 import { S } from "@/lib/strings";
 
@@ -17,8 +17,8 @@ export function FeedTimeline({ logs }: FeedTimelineProps) {
   return (
     <div>
       {logs.map((log) => {
-        const foodType = log.event?.food_type as FoodType | undefined;
-        const icon = foodType ? FOOD_ICONS[foodType] : null;
+        const icon = log.event ? eventIcon(log.event) : null;
+        const label = log.event && (isFood(log.event) ? log.event.food_type : log.event.category);
         return (
           <div
             key={log.id}
@@ -34,7 +34,7 @@ export function FeedTimeline({ logs }: FeedTimelineProps) {
             <div style={{ color: "var(--g5)" }}>
               {icon && (
                 <span className="mr-1">
-                  <span className="emoji">{icon}</span> {foodType}
+                  <span className="emoji">{icon}</span> {label}
                 </span>
               )}
               <strong className="font-semibold" style={{ color: "var(--fg)" }}>

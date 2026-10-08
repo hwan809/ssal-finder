@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEvent } from "@/lib/events";
-import { formatDateKst, shortFoodName } from "@/lib/calendar-utils";
+import { formatDateKst } from "@/lib/calendar-utils";
+import { shareHeadline } from "@/lib/event-display";
 import { EventDetail } from "@/components/events/event-detail";
 import { S } from "@/lib/strings";
 
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const event = await getEvent(id);
   if (!event) return {};
-  const headline = S.SHARE_HEADLINE(shortFoodName(event.food_note, event.food_type));
+  const headline = shareHeadline(event);
   const description = [formatDateKst(event.start_at), event.title, event.location]
     .filter(Boolean)
     .join(" · ");

@@ -10,7 +10,7 @@ export default async function FeedPage() {
     const supabase = createServerClient();
     const { data } = await supabase
       .from("update_logs")
-      .select("*, event:events(title, food_type)")
+      .select("*, event:events(*)")
       .order("created_at", { ascending: false });
     if (data?.length) logs = data;
   }

@@ -21,6 +21,7 @@
   --g7: #ddd;
   --g9: #f5f5f5;
   --point: #e8390e;
+  --point-all: #2856d6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +33,7 @@
     --g7: #333;
     --g9: #111;
     --point: #ff6633;
+    --point-all: #6b8cff;
   }
 }
 
@@ -43,8 +45,70 @@
   --g7: #333;
   --g9: #111;
   --point: #ff6633;
+  --point-all: #6b8cff;
 }
 
 .emoji {
   font-family: "Tossface", sans-serif;
+}
+
+/* 쌀먹찾기 ↔ 행사모음 전환 */
+@property --point {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e8390e;
+}
+
+.mode-all {
+  --point: var(--point-all);
+}
+
+.mode-animate {
+  transition: --point 320ms ease;
+}
+
+.mode-roll {
+  display: block;
+  height: 1.4em;
+  overflow: hidden;
+}
+
+.mode-roll-track {
+  display: flex;
+  flex-direction: column;
+}
+
+.mode-roll-track > span {
+  height: 1.4em;
+  line-height: 1.4em;
+  white-space: nowrap;
+}
+
+.mode-animate .mode-roll-track {
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mode-all .mode-roll-track {
+  transform: translateY(-50%);
+}
+
+.mode-animate .mode-fade {
+  animation: mode-fade 280ms ease both;
+}
+
+@keyframes mode-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-animate,
+  .mode-animate .mode-roll-track {
+    transition: none;
+  }
+  .mode-animate .mode-fade {
+    animation: none;
+  }
 }

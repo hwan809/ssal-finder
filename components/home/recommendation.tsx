@@ -1,11 +1,12 @@
 import Link from "next/link";
-import type { Event } from "@/lib/types";
-import { FOOD_ICONS } from "@/lib/colors";
+import type { Event, Mode } from "@/lib/types";
 import { formatTime } from "@/lib/calendar-utils";
+import { eventIcon } from "@/lib/event-display";
 import { S } from "@/lib/strings";
 
 interface RecommendationProps {
   events: Event[];
+  mode: Mode;
 }
 
 interface RecommendationResult {
@@ -25,7 +26,7 @@ function getRecommendation(events: Event[]): RecommendationResult {
   const shortFoodName = (e: Event) => {
     const note = e.food_note;
     if (note && note.length <= 8) return note;
-    return e.food_type;
+    return e.food_type ?? "기타";
   };
 
   const futureOnly = (e: Event) => e.start_at >= nowIso;
@@ -54,6 +55,33 @@ function getRecommendation(events: Event[]): RecommendationResult {
   return { label: S.REC_EMPTY_WEEK, emphasis: "", items: [] };
 }
 
+/** 행사모음: 메뉴 추천 대신 오늘/내일/이번 주 행사 수를 보여준다. */
+function getAllRecommendation(events: Event[]): RecommendationResult {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const todayStr = nowIso.slice(0, 10);
+  const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
+  const weekEnd = new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+  const count = (n: number) => `${n}개`;
+
+  const today = events.filter((e) => e.start_at.slice(0, 10) === todayStr && e.start_at >= nowIso);
+  if (today.length > 0) {
+    return { label: S.REC_ALL_TODAY(today.length), emphasis: count(today.length), items: today.slice(0, 3) };
+  }
+
+  const tomorrow = events.filter((e) => e.start_at.slice(0, 10) === tomorrowStr);
+  if (tomorrow.length > 0) {
+    return { label: S.REC_ALL_TOMORROW(tomorrow.length), emphasis: count(tomorrow.length), items: tomorrow.slice(0, 3) };
+  }
+
+  const week = events.filter((e) => e.start_at.slice(0, 10) > todayStr && e.start_at.slice(0, 10) <= weekEnd);
+  if (week.length > 0) {
+    return { label: S.REC_ALL_WEEK(week.length), emphasis: count(week.length), items: week.slice(0, 3) };
+  }
+
+  return { label: S.REC_ALL_EMPTY, emphasis: "", items: [] };
+}
+
 /** Renders `label` (which may contain literal "\n" line breaks) highlighting the
  * `emphasis` substring in --point color, leaving the rest as plain text. */
 function renderLabel(label: string, emphasis: string) {
@@ -71,8 +99,9 @@ function renderLabel(label: string, emphasis: string) {
   );
 }
 
-export function Recommendation({ events }: RecommendationProps) {
-  const { label, emphasis, items } = getRecommendation(events);
+export function Recommendation({ events, mode }: RecommendationProps) {
+  const { label, emphasis, items } =
+    mode === "food" ? getRecommendation(events) : getAllRecommendation(events);
 
   return (
     <div className="px-5 pt-5 pb-6">
@@ -90,13 +119,13 @@ export function Recommendation({ events }: RecommendationProps) {
           className="flex items-center gap-3 py-3 active:opacity-60"
           style={{ borderTop: "1px solid var(--g9)", marginTop: "14px" }}
         >
-          <span className="emoji text-[28px]">{FOOD_ICONS[event.food_type]}</span>
+          <span className="emoji text-[28px]">{eventIcon(event)}</span>
           <div className="flex-1 min-w-0">
-            <div className="text-[15px] font-bold" style={{ letterSpacing: "-0.02em" }}>
-              {event.food_note || event.food_type}
+            <div className="text-[15px] font-bold truncate" style={{ letterSpacing: "-0.02em" }}>
+              {mode === "food" ? event.food_note || event.food_type : event.title}
             </div>
             <div className="text-[12px] mt-0.5" style={{ color: "var(--g5)" }}>
-              {event.title} · {event.location || ""}
+              {mode === "food" ? `${event.title} · ${event.location || ""}` : event.location || ""}
             </div>
           </div>
           <div

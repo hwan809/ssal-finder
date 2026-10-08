@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import type { Event } from "@/lib/types";
-import { FOOD_ICONS } from "@/lib/colors";
+import { eventIcon, isFood } from "@/lib/event-display";
 import { formatDateLong, formatTime, googleCalendarUrl } from "@/lib/calendar-utils";
 import { AutoRegisterButton, type AutoRegisterButtonHandle } from "@/components/events/auto-register-button";
 import { AttendeeSection, type AttendeeSectionHandle } from "@/components/events/attendee-section";
@@ -46,9 +46,9 @@ function EventDetailContent({ event }: { event: Event }) {
 
       <main className="px-5 pb-20 pt-2">
         <div className="flex items-center gap-1.5 mb-2">
-          <span className="emoji text-[15px]">{FOOD_ICONS[event.food_type]}</span>
+          <span className="emoji text-[15px]">{eventIcon(event)}</span>
           <span className="text-[13px] font-bold" style={{ color: "var(--g5)" }}>
-            {event.food_note || event.food_type}
+            {isFood(event) ? event.food_note || event.food_type : event.category || "행사"}
           </span>
         </div>
 

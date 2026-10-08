@@ -2,7 +2,7 @@
 
 import type { Event } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
-import { shortFoodName } from "@/lib/calendar-utils";
+import { shareHeadline } from "@/lib/event-display";
 import { S } from "@/lib/strings";
 
 // 모바일은 OS 공유 시트(카톡, 인스타 DM 등), 지원 안 하는 브라우저는 링크 복사.
@@ -15,7 +15,7 @@ export function ShareButton({ event }: { event: Event }) {
     if (navigator.share) {
       try {
         // 카톡 등은 text를 링크 위 말풍선으로 보낸다. 카드 헤드라인과 맞춘다.
-        await navigator.share({ text: S.SHARE_HEADLINE(shortFoodName(event.food_note, event.food_type)), url });
+        await navigator.share({ text: shareHeadline(event), url });
       } catch (e) {
         if ((e as Error).name !== "AbortError") toast(S.DETAIL_SHARE_FAIL);
       }

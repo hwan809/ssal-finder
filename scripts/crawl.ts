@@ -84,6 +84,7 @@ interface Summary {
   fetched: number;
   classifyFailed: number;
   foodEvents: number;
+  otherEvents: number;
   added: number;
   updated: number;
   skipped: number;
@@ -306,27 +307,34 @@ async function processSite(site: NoticeSite, args: Args, summary: Summary): Prom
 
   // ---- Step 4: classify ------------------------------------------------
   const classifications = await classifyWithPool(notices);
-  const foodEvents: Array<{ notice: FetchedNotice; classification: ClassifiedEvent }> = [];
+  const events: Array<{ notice: FetchedNotice; classification: ClassifiedEvent }> = [];
   for (let i = 0; i < notices.length; i++) {
     const result = classifications[i];
     if (!result.ok) {
       summary.classifyFailed++;
       continue;
     }
-    if (result.value.is_food_event) {
-      foodEvents.push({ notice: notices[i], classification: result.value });
-      console.log(`[crawl]   food event: "${result.value.title}" (${result.value.food_type})`);
+    const cls = result.value;
+    if (!cls.is_event) {
+      console.log(`[crawl]   not event: "${notices[i].link.title}"`);
+      continue;
+    }
+    events.push({ notice: notices[i], classification: cls });
+    if (cls.is_food_event) {
+      summary.foodEvents++;
+      console.log(`[crawl]   food event: "${cls.title}" (${cls.food_type})`);
     } else {
-      console.log(`[crawl]   not food: "${notices[i].link.title}"`);
+      summary.otherEvents++;
+      console.log(`[crawl]   event: "${cls.title}" (${cls.category})`);
     }
   }
-  summary.foodEvents += foodEvents.length;
 
   // ---- Step 5: forms + upsert -----------------------------------------
-  await cacheForms(foodEvents.map((f) => f.classification));
+  // Auto-register is a food-mode feature; skip forms for non-food events.
+  await cacheForms(events.filter((e) => e.classification.is_food_event).map((e) => e.classification));
 
   const eventIdByUrl = new Map<string, string | null>();
-  for (const { notice, classification } of foodEvents) {
+  for (const { notice, classification } of events) {
     const url = classification.register_url;
     const formId = url ? extractFormId(url) : null;
     const formData = formId ? formCache.get(formId) : url ? formCache.get(url) : null;
@@ -392,6 +400,7 @@ async function main() {
     fetched: 0,
     classifyFailed: 0,
     foodEvents: 0,
+    otherEvents: 0,
     added: 0,
     updated: 0,
     skipped: 0,
@@ -430,6 +439,7 @@ async function main() {
   console.log(`  New notices:     ${summary.fetched}`);
   console.log(`  Classify failed: ${summary.classifyFailed}`);
   console.log(`  Food events:     ${summary.foodEvents}`);
+  console.log(`  Other events:    ${summary.otherEvents}`);
   console.log(`  DB added:        ${summary.added}`);
   console.log(`  DB updated:      ${summary.updated}`);
   console.log(`  DB skipped:      ${summary.skipped}`);
