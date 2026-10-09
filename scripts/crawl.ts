@@ -56,7 +56,7 @@ const CRAWL_FUZZY_THRESHOLD = 0.9;
  */
 const RESCAN_REQUEST_GAP_MS = 2000;
 
-const USAGE = `Usage: npx tsx crawl.ts [--dry-run] [--rescan] [--site=<dept substring>]`;
+const USAGE = `Usage: npx tsx crawl.ts [--dry-run] [--rescan] [--site=<dept substring>[,<more>...]]`;
 
 interface Args {
   dryRun: boolean;
@@ -400,7 +400,9 @@ async function main() {
   console.log("=== ssal-finder dept notice crawler ===");
   console.log(`Started at: ${new Date().toISOString()}${args.dryRun ? " (dry run)" : ""}`);
 
-  const sites = args.site ? SITES.filter((s) => s.dept.includes(args.site!)) : SITES;
+  // --site=a,b matches any of the comma-separated dept substrings
+  const wanted = args.site?.split(",").map((w) => w.trim()).filter(Boolean);
+  const sites = wanted ? SITES.filter((s) => wanted.some((w) => s.dept.includes(w))) : SITES;
   if (sites.length === 0) {
     console.error(`No site matches --site=${args.site}`);
     process.exit(1);

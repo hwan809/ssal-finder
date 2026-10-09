@@ -14,6 +14,10 @@ on:
         type: choice
         options: ['off', 'all', 'boards']
         default: 'off'
+      sites:
+        description: 'Boards backfill only: comma-separated dept names (empty = all)'
+        required: false
+        default: ''
 
 jobs:
   collect:
@@ -58,7 +62,7 @@ jobs:
         run: |
           cd scripts
           if [ "${{ inputs.backfill }}" = "all" ] || [ "${{ inputs.backfill }}" = "boards" ]; then
-            npx tsx crawl.ts --rescan
+            npx tsx crawl.ts --rescan ${{ inputs.sites && format('--site={0}', inputs.sites) || '' }}
           else
             npx tsx crawl.ts
           fi
